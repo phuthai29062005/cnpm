@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang cá nhân - Quản lý Dân cư</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-light: #5dade2;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --secondary-light: #34495e;
+            --success: #27ae60;
+            --success-light: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #17a2b8;
+            --gray-light: #ecf0f1;
+            --gray: #bdc3c7;
+            --gray-dark: #95a5a6;
+            --white: #ffffff;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+            --shadow-xl: 0 15px 30px rgba(0,0,0,0.2);
+            --shadow-card: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar { 
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            box-shadow: var(--shadow-md);
+            padding: 15px 0;
+        }
+        
+        .navbar-brand { 
+            color: white !important; 
+            font-weight: 600;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-link { 
+            color: white !important; 
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-outline-light {
+            border: 2px solid rgba(255,255,255,0.5);
+            color: white;
+        }
+        
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+            border-color: white;
+        }
+        
+        .btn-outline-info {
+            border: 2px solid var(--info);
+            color: var(--info);
+        }
+        
+        .btn-outline-info:hover {
+            background: var(--info);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-warning {
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+        
+        .btn-outline-warning:hover {
+            background: var(--warning);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-success:hover {
+            background: var(--success-light);
+            transform: translateY(-2px);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .alert-success {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .alert-warning {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+            border-left: 4px solid var(--warning);
+        }
+        
+        /* Card Styles */
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-card);
+            border: none;
+            transition: var(--transition);
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px 25px;
+            border-bottom: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+        }
+        
+        .card-header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card-header h5 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        /* Notification Styles */
+        .notification-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .notification-item {
+            border: none;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+        
+        .notification-item:hover {
+            background: rgba(52, 152, 219, 0.05);
+            border-left-color: var(--primary);
+        }
+        
+        .notification-item.unread {
+            background: rgba(52, 152, 219, 0.08);
+            font-weight: 600;
+        }
+        
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .notification-icon.bill {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        .notification-icon.info {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .notification-icon.warning {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Profile Info */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gray-light);
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--success) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .profile-info h4 {
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .profile-info p {
+            color: var(--gray-dark);
+            margin: 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .info-item {
+            background: rgba(52, 152, 219, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+        
+        /* Household Info */
+        .household-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-light);
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.3rem;
+        }
+        
+        .stat-icon.electric {
+            background: rgba(241, 196, 15, 0.1);
+            color: var(--warning);
+        }
+        
+        .stat-icon.water {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .stat-icon.members {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--gray-dark);
+            font-size: 0.85rem;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+        
+        th {
+            background: var(--secondary);
+            color: white;
+            font-weight: 600;
+            padding: 15px 20px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 12px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr {
+            transition: var(--transition);
+        }
+        
+        tr:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-primary {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .amount-cell {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-dark);
+        }
+        
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--gray);
+            opacity: 0.5;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+                margin: 20px auto;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            .card-header {
+                padding: 15px 20px;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .household-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                <i class="fas fa-users"></i> Quản lý Dân cư
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text text-light me-3">
+                    Xin chào, <strong>{{ current_user.ho_ten }}</strong>
+                </span>
+                <a href="{{ url_for('main.receipts') }}" class="btn btn-outline-info me-2">
+                    <i class="fas fa-file-invoice-dollar"></i> Biên Lai
+                </a>
+                <a href="{{ url_for('main.send_request') }}" class="btn btn-outline-warning me-2">
+                    <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+                </a>
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-light me-2">
+                    <i class="fas fa-key"></i> Đổi MK
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} d-flex align-items-center">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row g-4">
+            <!-- Notifications Column -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-content">
+                            <h5><i class="fas fa-bell"></i> Thông báo của bạn</h5>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="notification-list">
+                            {% if thong_bao_list %}
+                                {% for tb in thong_bao_list %}
+                                    <div class="notification-item {% if not tb.da_doc %}unread{% endif %} d-flex align-items-start">
+                                        <div class="notification-icon {% if tb.loai_thong_bao == 'Hóa đơn' %}bill{% else %}info{% endif %}">
+                                            <i class="fas fa-{% if tb.loai_thong_bao == 'Hóa đơn' %}money-bill-wave{% else %}info-circle{% endif %}"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <p class="mb-1">
+                                                <strong>{{ tb.loai_thong_bao }}</strong><br>
+                                                {{ tb.noi_dung }}
+                                            </p>
+                                            <small class="text-muted">{{ tb.ngay_tao.strftime('%d/%m/%Y %H:%M') }}</small>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-bell-slash empty-icon"></i>
+                                    <h5>Không có thông báo</h5>
+                                    <p class="text-muted">Bạn không có thông báo nào mới</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Column -->
+            <div class="col-lg-8">
+                <!-- Personal Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <div class="card-header-content">
+                            <h5><i class="fas fa-user"></i> Thông tin cá nhân</h5>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if user %}
+                            <div class="profile-header">
+                                <div class="profile-avatar">
+                                    {{ user.ho_ten[0] if user.ho_ten else 'U' }}
+                                </div>
+                                <div class="profile-info">
+                                    <h4>{{ user.ho_ten }}</h4>
+                                    <p>Tài khoản cư dân</p>
+                                </div>
+                            </div>
+                            
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Ngày sinh</div>
+                                    <div class="info-value">{{ user.ngay_sinh.strftime('%d/%m/%Y') }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Số CCCD</div>
+                                    <div class="info-value">{{ user.so_cccd }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Giới tính</div>
+                                    <div class="info-value">{{ user.gioi_tinh or 'Chưa cập nhật' }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Nghề nghiệp</div>
+                                    <div class="info-value">{{ user.nghe_nghiep or 'Chưa cập nhật' }}</div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-user-slash empty-icon"></i>
+                                <h5>Tài khoản chưa liên kết</h5>
+                                <p class="text-muted">Tài khoản chưa được liên kết với thông tin nhân khẩu</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Household Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-content">
+                            <h5><i class="fas fa-house-user"></i> Thông tin Hộ khẩu</h5>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if hokhau %}
+                            <!-- Household Stats -->
+                            <div class="household-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon electric">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="stat-number">{{ hokhau.so_dien }} kWh</div>
+                                    <div class="stat-label">Chỉ số điện</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon water">
+                                        <i class="fas fa-tint"></i>
+                                    </div>
+                                    <div class="stat-number">{{ hokhau.so_nuoc }} m³</div>
+                                    <div class="stat-label">Chỉ số nước</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon members">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="stat-number">{{ thanh_vien|length }}</div>
+                                    <div class="stat-label">Thành viên</div>
+                                </div>
+                            </div>
+
+                            <!-- Household Details -->
+                            <div class="info-grid mb-4">
+                                <div class="info-item">
+                                    <div class="info-label">Mã Hộ khẩu</div>
+                                    <div class="info-value">{{ hokhau.ma_so_ho_khau }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Chủ hộ</div>
+                                    <div class="info-value">{{ hokhau.chu_ho.ho_ten if hokhau.chu_ho else 'N/A' }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Địa chỉ</div>
+                                    <div class="info-value">{{ hokhau.so_nha }}, {{ hokhau.duong_pho }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Household Members -->
+                            <h6 class="mb-3" style="color: var(--secondary);">
+                                <i class="fas fa-users me-2"></i>Thành viên trong hộ
+                            </h6>
+                            <div class="table-container mb-4">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Họ tên</th>
+                                            <th>Quan hệ CH</th>
+                                            <th>Ngày sinh</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tv in thanh_vien %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px; font-size: 0.8rem;">
+                                                        {{ tv.nhan_khau.ho_ten[0] }}
+                                                    </div>
+                                                    <div>
+                                                        {{ tv.nhan_khau.ho_ten }}
+                                                        {% if user and tv.nhan_khau_id == user.id %}
+                                                            <span class="badge badge-primary">Bạn</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ tv.quan_he_chu_ho }}</td>
+                                            <td>{{ tv.nhan_khau.ngay_sinh.strftime('%d/%m/%Y') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pending Bills -->
+                            <h6 class="mb-3" style="color: var(--danger);">
+                                <i class="fas fa-money-bill-wave me-2"></i>Các khoản phí đang chờ
+                            </h6>
+                            {% if hoa_don_list %}
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Loại phí</th>
+                                                <th>Số tiền (VNĐ)</th>
+                                                <th>Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for bill in hoa_don_list %}
+                                            <tr>
+                                                <td>{{ bill.loai_phi.ten_phi }}</td>
+                                                <td class="amount-cell">{{ "{:,.0f}".format(bill.so_tien) }}</td>
+                                                <td>
+                                                    <a href="{{ url_for('main.pay_online', bill_id=bill.id) }}" class="btn btn-success" onclick="return confirm('Xác nhận thanh toán Online?')">
+                                                        <i class="fas fa-qrcode"></i> Thanh toán Ngay
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="empty-state" style="padding: 20px;">
+                                    <i class="fas fa-check-circle empty-icon" style="color: var(--success);"></i>
+                                    <p class="text-muted mb-0">Không có khoản phí nào đang chờ thanh toán</p>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-house-circle-xmark empty-icon"></i>
+                                <h5>Chưa có hộ khẩu</h5>
+                                <p class="text-muted">Bạn chưa được đăng ký vào hộ khẩu nào</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add hover effects to interactive elements
+        document.querySelectorAll('.notification-item, tr').forEach(element => {
+            element.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(5px)';
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+
+        // Add loading state to payment buttons
+        document.querySelectorAll('.btn-success').forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (confirm('Xác nhận thanh toán Online?')) {
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }, 3000);
+                }
+            });
+        });
+
+        // Mark notifications as read when clicked
+        document.querySelectorAll('.notification-item.unread').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.remove('unread');
+                // Here you would typically make an API call to mark as read
+            });
+        });
+    </script>
+</body>
+</html>

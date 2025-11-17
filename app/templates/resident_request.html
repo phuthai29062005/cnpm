@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Gửi Yêu Cầu - Hệ thống Quản lý Dân cư</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-light: #5dade2;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --secondary-light: #34495e;
+            --success: #27ae60;
+            --success-light: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #17a2b8;
+            --gray-light: #ecf0f1;
+            --gray: #bdc3c7;
+            --gray-dark: #95a5a6;
+            --white: #ffffff;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+            --shadow-xl: 0 15px 30px rgba(0,0,0,0.2);
+            --shadow-card: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="%23ffffff" fill-opacity="0.03" points="0,1000 1000,0 1000,1000"/></svg>');
+            background-size: cover;
+        }
+        
+        .request-container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .request-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .request-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            border-bottom: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+        }
+        
+        .card-header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .request-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            border: 3px solid rgba(255,255,255,0.3);
+            transition: var(--transition);
+        }
+        
+        .request-icon:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+        
+        .card-body {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            transition: var(--transition);
+            font-size: 1rem;
+            background: rgba(255,255,255,0.8);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+            background: white;
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .character-count {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--gray-dark);
+            margin-top: 5px;
+        }
+        
+        .character-count.warning {
+            color: var(--warning);
+        }
+        
+        .character-count.danger {
+            color: var(--danger);
+        }
+        
+        .btn {
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: var(--shadow-md);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-dark);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .request-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .request-type-card {
+            background: var(--white);
+            border: 2px solid var(--gray-light);
+            border-radius: 10px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .request-type-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .request-type-card.selected {
+            border-color: var(--primary);
+            background: rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .type-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        
+        .type-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        
+        .suggestion-list {
+            background: var(--white);
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--gray-light);
+            transition: var(--transition);
+        }
+        
+        .suggestion-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .alert-success {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+        
+        @media (max-width: 576px) {
+            .card-body {
+                padding: 30px 25px;
+            }
+            
+            .card-header {
+                padding: 25px 20px;
+            }
+            
+            .request-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+            }
+            
+            .request-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="request-container">
+        <div class="request-card">
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div class="request-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <h3 class="mb-2">Gửi Yêu Cầu</h3>
+                    <p class="mb-0 opacity-75">Gửi yêu cầu đến Ban Quản Lý</p>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} d-flex align-items-center">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" id="requestForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-tag"></i>
+                            {{ form.loai_yeu_cau.label.text }}
+                        </label>
+                        
+                        <div class="request-types">
+                            <div class="request-type-card" data-value="sửa chữa">
+                                <div class="type-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="type-label">Sửa chữa</div>
+                            </div>
+                            <div class="request-type-card" data-value="khiếu nại">
+                                <div class="type-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="type-label">Khiếu nại</div>
+                            </div>
+                            <div class="request-type-card" data-value="đề xuất">
+                                <div class="type-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div class="type-label">Đề xuất</div>
+                            </div>
+                            <div class="request-type-card" data-value="khác">
+                                <div class="type-icon">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </div>
+                                <div class="type-label">Khác</div>
+                            </div>
+                        </div>
+                        
+                        {{ form.loai_yeu_cau(class="form-select", id="loaiYeuCau", style="display: none;") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-align-left"></i>
+                            {{ form.noi_dung.label.text }}
+                        </label>
+                        {{ form.noi_dung(class="form-control", rows="6", placeholder="Mô tả chi tiết yêu cầu của bạn...", id="noiDung") }}
+                        <div class="character-count" id="characterCount">
+                            <span id="currentCount">0</span>/500 ký tự
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-3 mt-4">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+                        </button>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại Trang chủ
+                        </a>
+                    </div>
+                </form>
+                
+                <!-- Quick Suggestions -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-lightbulb me-2"></i>Gợi ý nhanh:
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm suggestion-btn" data-text="Tôi cần sửa chữa hệ thống điện tại phòng khách">
+                            Sửa điện
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm suggestion-btn" data-text="Đề nghị sửa chữa đường ống nước bị rò rỉ">
+                            Sửa nước
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm suggestion-btn" data-text="Đề xuất lắp đặt thêm camera an ninh">
+                            An ninh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Request type selection
+        document.querySelectorAll('.request-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove selected class from all cards
+                document.querySelectorAll('.request-type-card').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked card
+                this.classList.add('selected');
+                
+                // Update hidden select field
+                const selectedValue = this.getAttribute('data-value');
+                document.getElementById('loaiYeuCau').value = selectedValue;
+            });
+        });
+
+        // Character count for textarea
+        const textarea = document.getElementById('noiDung');
+        const characterCount = document.getElementById('characterCount');
+        const currentCount = document.getElementById('currentCount');
+        const maxLength = 500;
+
+        textarea.addEventListener('input', function() {
+            const length = this.value.length;
+            currentCount.textContent = length;
+            
+            // Update character count color
+            characterCount.className = 'character-count';
+            if (length > maxLength * 0.8) {
+                characterCount.classList.add('warning');
+            }
+            if (length > maxLength * 0.95) {
+                characterCount.classList.add('danger');
+            }
+            
+            // Limit characters
+            if (length > maxLength) {
+                this.value = this.value.substring(0, maxLength);
+                currentCount.textContent = maxLength;
+            }
+        });
+
+        // Quick suggestion buttons
+        document.querySelectorAll('.suggestion-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const suggestionText = this.getAttribute('data-text');
+                textarea.value = suggestionText;
+                textarea.dispatchEvent(new Event('input'));
+                textarea.focus();
+            });
+        });
+
+        // Form submission
+        document.getElementById('requestForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Validate form
+            const requestType = document.getElementById('loaiYeuCau').value;
+            const content = textarea.value.trim();
+            
+            if (!requestType) {
+                e.preventDefault();
+                alert('Vui lòng chọn loại yêu cầu!');
+                return;
+            }
+            
+            if (!content) {
+                e.preventDefault();
+                alert('Vui lòng nhập nội dung yêu cầu!');
+                return;
+            }
+            
+            if (content.length < 10) {
+                e.preventDefault();
+                alert('Nội dung yêu cầu phải có ít nhất 10 ký tự!');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.innerHTML = '<div class="loading"></div> Đang gửi...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 3000);
+        });
+
+        // Ripple effect for buttons
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.6);
+                    transform: scale(0);
+                    animation: ripple-animation 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                `;
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Auto-select first request type
+        document.querySelector('.request-type-card').click();
+
+        // Add focus effects
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+
+        // Initialize character count
+        textarea.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>

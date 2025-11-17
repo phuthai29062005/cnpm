@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Hộ khẩu - {{ hokhau.ma_so_ho_khau }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-light: #5dade2;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --secondary-light: #34495e;
+            --success: #27ae60;
+            --success-light: #2ecc71;
+            --danger: #e74c3c;
+            --danger-light: #e74c3c;
+            --warning: #f39c12;
+            --warning-light: #f1c40f;
+            --info: #17a2b8;
+            --gray-light: #ecf0f1;
+            --gray: #bdc3c7;
+            --gray-dark: #95a5a6;
+            --white: #ffffff;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+            --shadow-xl: 0 15px 30px rgba(0,0,0,0.2);
+            --shadow-card: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh; 
+            padding: 30px; 
+        }
+        
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: var(--white); 
+            border-radius: 16px; 
+            box-shadow: var(--shadow-xl);
+            overflow: hidden; 
+            transition: var(--transition);
+        }
+        
+        .container:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+            color: white; 
+            padding: 25px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+        
+        .header h2 { 
+            font-size: 1.8rem; 
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-icon {
+            background: rgba(255,255,255,0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        
+        .content { 
+            padding: 35px; 
+        }
+        
+        .info-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 30px; 
+        }
+        
+        .info-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-card);
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .info-label { 
+            font-weight: 600; 
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-value { 
+            color: var(--secondary); 
+            font-size: 1.1rem; 
+            font-weight: 500;
+        }
+        
+        .info-value.highlight {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .utility-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .utility-icon {
+            background: rgba(255,255,255,0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .utility-content {
+            flex: 1;
+        }
+        
+        .utility-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .utility-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+        
+        th, td { 
+            padding: 16px 20px; 
+            text-align: left; 
+            border-bottom: 1px solid #eee; 
+        }
+        
+        th { 
+            background: var(--secondary); 
+            color: white; 
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr {
+            transition: var(--transition);
+        }
+        
+        tr:hover { 
+            background: rgba(52, 152, 219, 0.05); 
+        }
+        
+        .btn { 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: 500; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+        
+        .btn-secondary { 
+            background: var(--gray-dark); 
+            color: white; 
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-primary { 
+            background: var(--primary); 
+            color: white; 
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-success { 
+            background: var(--success); 
+            color: white; 
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-success:hover {
+            background: var(--success-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .badge { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 0.8rem; 
+            font-weight: bold; 
+            display: inline-block;
+            margin-left: 8px;
+        }
+        
+        .badge-owner { 
+            background: linear-gradient(135deg, var(--danger) 0%, #c0392b 100%);
+            color: white; 
+        }
+        
+        .badge-active {
+            background: rgba(39, 174, 96, 0.15);
+            color: var(--success);
+        }
+        
+        .badge-inactive {
+            background: rgba(189, 195, 199, 0.15);
+            color: var(--gray-dark);
+        }
+        
+        .section-title {
+            margin: 30px 0 20px 0;
+            color: var(--secondary);
+            font-weight: 600;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(to right, var(--primary), transparent);
+            margin-left: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .note-card {
+            background: rgba(52, 152, 219, 0.05);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .note-label {
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .note-content {
+            color: var(--secondary);
+            font-style: italic;
+            line-height: 1.5;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 20px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .action-buttons {
+                justify-content: stretch;
+            }
+            
+            .action-buttons .btn {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+        
+        /* Animation for table rows */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        tbody tr {
+            animation: fadeInUp 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        tbody tr:nth-child(1) { animation-delay: 0.1s; }
+        tbody tr:nth-child(2) { animation-delay: 0.2s; }
+        tbody tr:nth-child(3) { animation-delay: 0.3s; }
+        tbody tr:nth-child(4) { animation-delay: 0.4s; }
+        tbody tr:nth-child(5) { animation-delay: 0.5s; }
+        tbody tr:nth-child(6) { animation-delay: 0.6s; }
+        
+        /* Status indicators */
+        .status-active {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .status-inactive {
+            color: var(--gray-dark);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center;">
+                <div class="header-icon">
+                    <i class="fas fa-house-user"></i>
+                </div>
+                <div>
+                    <h2>Chi tiết Hộ khẩu</h2>
+                    <div style="opacity: 0.9; margin-top: 5px; font-size: 1.1rem;">
+                        {{ hokhau.ma_so_ho_khau }}
+                    </div>
+                </div>
+            </div>
+            <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+            </a>
+        </div>
+        
+        <div class="content">
+            <!-- Thông tin cơ bản -->
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-label">
+                        <i class="fas fa-user-crown"></i> Chủ hộ
+                    </div>
+                    <div class="info-value highlight">
+                        {{ hokhau.chu_ho.ho_ten if hokhau.chu_ho else 'Chưa có chủ hộ' }}
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-label">
+                        <i class="fas fa-calendar-alt"></i> Ngày tạo
+                    </div>
+                    <div class="info-value">
+                        {{ hokhau.ngay_tao.strftime('%d/%m/%Y') if hokhau.ngay_tao else 'N/A' }}
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-label">
+                        <i class="fas fa-users"></i> Số thành viên
+                    </div>
+                    <div class="info-value">
+                        {{ thanh_vien|length }} người
+                    </div>
+                </div>
+            </div>
+
+            <!-- Địa chỉ -->
+            <div class="info-card" style="margin-bottom: 25px;">
+                <div class="info-label">
+                    <i class="fas fa-map-marker-alt"></i> Địa chỉ
+                </div>
+                <div class="info-value" style="font-size: 1.1rem; line-height: 1.5;">
+                    {{ hokhau.so_nha }}, {{ hokhau.duong_pho }}<br>
+                    {{ hokhau.phuong_xa }}, {{ hokhau.quan_huyen }}
+                </div>
+            </div>
+
+            <!-- Chỉ số công tơ -->
+            <div class="utility-card">
+                <div class="utility-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="utility-content">
+                    <div class="utility-label">Chỉ số công tơ hiện tại</div>
+                    <div class="utility-value">
+                        <i class="fas fa-bolt" style="color: #f1c40f;"></i> 
+                        {{ hokhau.so_dien }} KW 
+                        <span style="margin: 0 15px;">|</span>
+                        <i class="fas fa-tint" style="color: #3498db;"></i> 
+                        {{ hokhau.so_nuoc }} m³
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ghi chú (nếu có) -->
+            {% if hokhau.ghi_chu %}
+            <div class="note-card">
+                <div class="note-label">
+                    <i class="fas fa-sticky-note"></i> Ghi chú
+                </div>
+                <div class="note-content">
+                    {{ hokhau.ghi_chu }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Danh sách thành viên -->
+            <h3 class="section-title">
+                <i class="fas fa-users"></i> Danh sách thành viên
+                <span style="font-size: 1rem; color: var(--gray-dark); margin-left: 10px;">
+                    ({{ thanh_vien|length }} thành viên)
+                </span>
+            </h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Họ tên</th>
+                        <th>Quan hệ với Chủ hộ</th>
+                        <th>Ngày sinh</th>
+                        <th>Giới tính</th>
+                        <th>CCCD</th>
+                        <th>Nghề nghiệp</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tv in thanh_vien %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 36px; height: 36px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                    {{ tv.nhan_khau.ho_ten[0] }}
+                                </div>
+                                <div>
+                                    <strong>{{ tv.nhan_khau.ho_ten }}</strong>
+                                    {% if tv.nhan_khau.id == hokhau.chu_ho_id %}
+                                        <span class="badge badge-owner">Chủ hộ</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ tv.quan_he_chu_ho }}</td>
+                        <td>{{ tv.nhan_khau.ngay_sinh.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ tv.nhan_khau.gioi_tinh }}</td>
+                        <td>{{ tv.nhan_khau.so_cccd or '-' }}</td>
+                        <td>{{ tv.nhan_khau.nghe_nghiep or '-' }}</td>
+                        <td>
+                            {% if tv.nhan_khau.tinh_trang == 'Đang sống' %}
+                                <span class="status-active">● {{ tv.nhan_khau.tinh_trang }}</span>
+                            {% else %}
+                                <span class="status-inactive">● {{ tv.nhan_khau.tinh_trang }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--gray-dark);">
+                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                            Chưa có thành viên nào trong hộ khẩu này.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{ url_for('crud.add_member_to_hokhau') }}?hokhau_id={{ hokhau.id }}" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> Thêm thành viên
+                </a>
+                <a href="{{ url_for('crud.edit_hokhau', id=hokhau.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Sửa thông tin hộ
+                </a>
+                <a href="{{ url_for('crud.split_household') }}?hokhau_id={{ hokhau.id }}" class="btn" style="background: var(--warning); color: white;">
+                    <i class="fas fa-cut"></i> Tách hộ khẩu
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Thêm hiệu ứng ripple cho các nút
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Tạo hiệu ứng ripple
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.6);
+                    transform: scale(0);
+                    animation: ripple-animation 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                `;
+                
+                this.appendChild(ripple);
+                
+                // Xóa phần tử ripple sau khi animation kết thúc
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Thêm hiệu ứng loading khi click vào nút hành động
+        document.querySelectorAll('.btn-primary, .btn-success').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<div class="loading"></div> Đang tải...';
+                this.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.pointerEvents = 'auto';
+                }, 1500);
+            });
+        });
+
+        // Highlight dòng chủ hộ trong bảng
+        document.addEventListener('DOMContentLoaded', function() {
+            const ownerRows = document.querySelectorAll('tr');
+            ownerRows.forEach(row => {
+                if (row.querySelector('.badge-owner')) {
+                    row.style.background = 'rgba(231, 76, 60, 0.05)';
+                    row.style.borderLeft = '3px solid var(--danger)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
