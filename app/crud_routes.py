@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, abort, r
 from flask_login import login_required, current_user
 from .forms import (
     NhanKhauForm, HoKhauForm, GiaoDichForm, TamTruForm, 
-    NhanKhauHoKhauForm, ThongBaoForm, GhiDienNuocForm, TachKhauForm, LoaiPhiForm
+    NhanKhauHoKhauForm, ThongBaoForm, GhiDienNuocForm, TachKhauForm, LoaiPhiForm,
+    KhaiSinhForm, KhaiTuForm
 )
 from .models import (
     db, NhanKhau, HoKhau, GiaoDich, TamTru, NhanKhauHoKhau, 
@@ -19,7 +20,7 @@ crud = Blueprint('crud', __name__, url_prefix='/admin')
 def check_admin():
     if current_user.role != 'admin': abort(403)
 
-# --- NHÂN KHẨU ---
+# --- NHÂN KHẨU (THÊM / SỬA / XÓA) ---
 @crud.route('/nhankhau/add', methods=['GET', 'POST'])
 def add_nhankhau():
     form = NhanKhauForm()
@@ -34,6 +35,8 @@ def add_nhankhau():
                 db.session.add(tk)
                 db.session.commit()
                 flash(f'Đã tạo TK cho {new_nk.ho_ten} (Pass: 1)', 'success')
+            else:
+                flash(f'Đã thêm {new_nk.ho_ten} (Chưa tạo TK do thiếu CCCD)', 'success')
             return redirect(url_for('admin.index'))
         except Exception as e:
             db.session.rollback()
@@ -68,6 +71,71 @@ def delete_nhankhau(id):
         flash(str(e), 'danger')
     return redirect(url_for('admin.index'))
 
+# --- [FIX BUG] KHAI SINH & KHAI TỬ ---
+@crud.route('/nhankhau/khaisinh', methods=['GET', 'POST'])
+def khaisinh():
+    form = KhaiSinhForm()
+    if form.validate_on_submit():
+        # 1. Tạo Nhân Khẩu Mới
+        nk = NhanKhau(
+            ho_ten=form.ho_ten.data,
+            ngay_sinh=form.ngay_sinh.data,
+            gioi_tinh=form.gioi_tinh.data,
+            nguyen_quan=form.nguyen_quan.data,
+            dan_toc=form.dan_toc.data,
+            id_ho_khau=form.ho_khau.data.id, # Link luôn vào hộ
+            tinh_trang='Bình thường',
+            noi_thuong_tru=form.ho_khau.data.so_nha + ", " + form.ho_khau.data.duong_pho
+        )
+        db.session.add(nk)
+        db.session.commit() # Để lấy ID
+
+        # 2. Tạo Link quan hệ
+        link = NhanKhauHoKhau(
+            nhan_khau_id=nk.id,
+            ho_khau_id=form.ho_khau.data.id,
+            quan_he_chu_ho=form.quan_he_chu_ho.data,
+            ngay_bat_dau=form.ngay_sinh.data
+        )
+        db.session.add(link)
+        
+        # 3. Log
+        db.session.add(LichSuHoKhau(ho_khau_id=form.ho_khau.data.id, noi_dung=f"Khai sinh thành viên mới: {nk.ho_ten}"))
+        
+        db.session.commit()
+        flash(f'Đã khai sinh cho bé {nk.ho_ten} vào hộ {form.ho_khau.data.ma_so_ho_khau}', 'success')
+        return redirect(url_for('admin.index'))
+    return render_template('admin/create_form.html', form=form, title='Khai Sinh (Thêm Mới Sinh)')
+
+@crud.route('/nhankhau/khaitu', methods=['GET', 'POST'])
+def khaitu():
+    form = KhaiTuForm()
+    if form.validate_on_submit():
+        nk = form.nhan_khau.data
+        hk_id = nk.id_ho_khau
+        
+        # 1. Cập nhật trạng thái
+        nk.tinh_trang = 'Qua đời'
+        nk.ghi_chu = f"Mất ngày {form.ngay_mat.data}. Lý do: {form.ly_do.data}"
+        nk.id_ho_khau = None # Xóa khỏi hộ hiện tại
+        
+        # 2. Xóa/Cập nhật bảng quan hệ
+        # Tìm link cũ và xóa đi để danh sách thành viên không hiện nữa
+        NhanKhauHoKhau.query.filter_by(nhan_khau_id=nk.id).delete()
+        
+        # 3. Log
+        if hk_id:
+            db.session.add(LichSuHoKhau(ho_khau_id=hk_id, noi_dung=f"Thành viên {nk.ho_ten} qua đời. Đã xóa khỏi hộ."))
+        
+        # 4. Xóa tài khoản (nếu có)
+        TaiKhoan.query.filter_by(nhan_khau_id=nk.id).delete()
+
+        db.session.commit()
+        flash(f'Đã xác nhận khai tử cho {nk.ho_ten}', 'success')
+        return redirect(url_for('admin.index'))
+    return render_template('admin/create_form.html', form=form, title='Khai Tử (Người Qua Đời)')
+
+
 # --- HỘ KHẨU ---
 @crud.route('/hokhau/add', methods=['GET', 'POST'])
 def add_hokhau():
@@ -78,6 +146,14 @@ def add_hokhau():
         hk.chu_ho = form.chu_ho.data
         db.session.add(hk)
         db.session.commit()
+        
+        # Nếu có chủ hộ, phải link ngay vào bảng NhanKhauHoKhau
+        if hk.chu_ho:
+            hk.chu_ho.id_ho_khau = hk.id
+            link = NhanKhauHoKhau(nhan_khau_id=hk.chu_ho_id, ho_khau_id=hk.id, quan_he_chu_ho="Chủ hộ")
+            db.session.add(link)
+            db.session.commit()
+
         flash('Thêm hộ khẩu thành công', 'success')
         return redirect(url_for('admin.index'))
     return render_template('admin/create_form.html', form=form, title='Thêm Hộ khẩu')
@@ -88,7 +164,6 @@ def edit_hokhau(id):
     form = HoKhauForm(obj=hk)
     if form.validate_on_submit():
         form.populate_obj(hk)
-        hk.chu_ho = form.chu_ho.data
         db.session.commit()
         flash('Cập nhật hộ khẩu thành công', 'success')
         return redirect(url_for('admin.index'))
@@ -110,48 +185,100 @@ def delete_hokhau(id):
         flash(str(e), 'danger')
     return redirect(url_for('admin.index'))
 
+# [FIX BUG] THÊM THÀNH VIÊN VÀO HỘ
 @crud.route('/hokhau/add_member', methods=['GET', 'POST'])
 def add_member_to_hokhau():
     form = NhanKhauHoKhauForm()
     if form.validate_on_submit():
-        nk = NhanKhau.query.get(form.nhan_khau.data.id)
-        if nk.id_ho_khau:
-            flash(f'Lỗi: {nk.ho_ten} đang thuộc hộ khác!', 'danger')
-            return redirect(url_for('admin.index'))
+        nk = form.nhan_khau.data
+        hk = form.ho_khau.data
         
-        link = NhanKhauHoKhau(nhan_khau_id=nk.id, ho_khau_id=form.ho_khau.data.id, quan_he_chu_ho=form.quan_he_chu_ho.data)
+        # Check nếu đã thuộc hộ khác
+        if nk.id_ho_khau:
+            if nk.id_ho_khau == hk.id:
+                flash(f'{nk.ho_ten} đã ở trong hộ này rồi!', 'warning')
+                return redirect(url_for('admin.index'))
+            else:
+                flash(f'Lỗi: {nk.ho_ten} đang thuộc hộ khác. Phải tách khẩu trước!', 'danger')
+                return redirect(url_for('admin.index'))
+        
+        # Thêm vào bảng liên kết
+        link = NhanKhauHoKhau(
+            nhan_khau_id=nk.id, 
+            ho_khau_id=hk.id, 
+            quan_he_chu_ho=form.quan_he_chu_ho.data
+        )
         db.session.add(link)
-        nk.id_ho_khau = form.ho_khau.data.id
-        db.session.add(LichSuHoKhau(ho_khau_id=form.ho_khau.data.id, noi_dung=f"Thêm thành viên: {nk.ho_ten} ({form.quan_he_chu_ho.data})"))
+        
+        # Cập nhật bảng NhanKhau
+        nk.id_ho_khau = hk.id
+        
+        # Log
+        db.session.add(LichSuHoKhau(ho_khau_id=hk.id, noi_dung=f"Thêm thành viên: {nk.ho_ten} ({form.quan_he_chu_ho.data})"))
+        
         db.session.commit()
-        flash('Đã thêm thành viên', 'success')
+        flash(f'Đã thêm {nk.ho_ten} vào hộ {hk.ma_so_ho_khau}', 'success')
         return redirect(url_for('admin.index'))
-    return render_template('admin/create_form.html', form=form, title='Thêm thành viên')
+    return render_template('admin/create_form.html', form=form, title='Thêm thành viên vào Hộ')
 
+# [FIX BUG] TÁCH KHẨU CHUẨN
 @crud.route('/hokhau/split', methods=['GET', 'POST'])
 def split_household():
     form = TachKhauForm()
     if form.validate_on_submit():
         nk = form.nhan_khau.data
+        old_hk_id = nk.id_ho_khau
+        
+        # Check nợ
         if GiaoDich.query.filter_by(nhan_khau_id=nk.id, trang_thai='Đang chờ').first():
-            flash('Đang nợ phí, không thể tách!', 'danger')
+            flash('Người này đang nợ phí cá nhân, không thể tách!', 'danger')
             return redirect(url_for('admin.index'))
+        
         try:
-            old_hk_id = nk.id_ho_khau
-            if form.loai_tach.data == 'new':
-                new_hk = HoKhau(ma_so_ho_khau=f"NEW-{datetime.now().timestamp()}", chu_ho_id=nk.id, so_nha=form.dia_chi_moi.data, duong_pho="...", phuong_xa="...", quan_huyen="...")
-                db.session.add(new_hk)
-                db.session.commit()
-                nk.id_ho_khau = new_hk.id
-                db.session.add(LichSuHoKhau(ho_khau_id=new_hk.id, noi_dung=f"Tách khẩu lập hộ mới. Chủ hộ: {nk.ho_ten}"))
-            else:
-                target = form.ho_khau_dich.data
-                nk.id_ho_khau = target.id
-                db.session.add(NhanKhauHoKhau(nhan_khau_id=nk.id, ho_khau_id=target.id, quan_he_chu_ho=form.quan_he_moi.data))
-                db.session.add(LichSuHoKhau(ho_khau_id=target.id, noi_dung=f"Nhập khẩu: {nk.ho_ten}"))
+            # 1. Xóa quan hệ cũ
+            NhanKhauHoKhau.query.filter_by(nhan_khau_id=nk.id).delete()
             
+            # 2. Xử lý hộ mới
+            new_hk = None
+            if form.loai_tach.data == 'new':
+                # Tạo hộ mới
+                new_hk = HoKhau(
+                    ma_so_ho_khau=f"NEW-{datetime.now().timestamp()}", 
+                    chu_ho_id=nk.id, 
+                    so_nha=form.dia_chi_moi.data or "Chưa rõ", 
+                    duong_pho="...", phuong_xa="...", quan_huyen="..."
+                )
+                db.session.add(new_hk)
+                db.session.commit() # Lấy ID
+                
+                target_hk_id = new_hk.id
+                quan_he = "Chủ hộ"
+                msg = f"Tách khẩu lập hộ mới. Chủ hộ: {nk.ho_ten}"
+            else:
+                # Chuyển sang hộ khác
+                if not form.ho_khau_dich.data:
+                    flash('Vui lòng chọn Hộ đích!', 'danger')
+                    return render_template('admin/create_form.html', form=form, title='Tách Khẩu')
+                
+                target_hk_id = form.ho_khau_dich.data.id
+                quan_he = form.quan_he_moi.data or "Thành viên"
+                msg = f"Chuyển đến từ hộ cũ."
+
+            # 3. Tạo quan hệ mới
+            new_link = NhanKhauHoKhau(
+                nhan_khau_id=nk.id,
+                ho_khau_id=target_hk_id,
+                quan_he_chu_ho=quan_he
+            )
+            db.session.add(new_link)
+            
+            # 4. Update NhanKhau
+            nk.id_ho_khau = target_hk_id
+            
+            # 5. Log
             if old_hk_id:
-                db.session.add(LichSuHoKhau(ho_khau_id=old_hk_id, noi_dung=f"Thành viên {nk.ho_ten} chuyển đi."))
+                db.session.add(LichSuHoKhau(ho_khau_id=old_hk_id, noi_dung=f"Thành viên {nk.ho_ten} đã tách khẩu/chuyển đi."))
+            db.session.add(LichSuHoKhau(ho_khau_id=target_hk_id, noi_dung=f"Nhập khẩu: {nk.ho_ten}. {msg}"))
             
             db.session.commit()
             flash('Tách khẩu thành công', 'success')
@@ -159,9 +286,44 @@ def split_household():
         except Exception as e:
             db.session.rollback()
             flash(str(e), 'danger')
-    return render_template('admin/create_form.html', form=form, title='Tách Khẩu')
+    return render_template('admin/create_form.html', form=form, title='Tách Khẩu / Chuyển Khẩu')
 
-# --- THANH TOÁN ---
+# --- THÔNG BÁO & GIAO DỊCH ---
+
+# [FIX BUG] THÔNG BÁO - Logic gửi chuẩn
+@crud.route('/thongbao/add', methods=['GET', 'POST'])
+def add_thongbao():
+    form = ThongBaoForm()
+    choices = [(0, "--- Không (Tin tức) ---")] + [(f.id, f.ten_phi) for f in LoaiPhi.query.all()]
+    form.loai_phi.choices = choices
+
+    if form.validate_on_submit():
+        # 1. Nếu là thông báo tin tức -> Gửi tất cả
+        if form.loai_thong_bao.data == 'Thông tin':
+            all_residents = TaiKhoan.query.filter_by(role='resident').all()
+            if not all_residents:
+                flash("Chưa có cư dân nào trong hệ thống để gửi!", "warning")
+                return redirect(url_for('admin.index'))
+            
+            count = 0
+            for res in all_residents:
+                db.session.add(ThongBao(
+                    nguoi_nhan_id=res.id,
+                    noi_dung=form.noi_dung.data,
+                    loai_thong_bao='Hệ thống'
+                ))
+                count += 1
+            db.session.commit()
+            flash(f"Đã gửi tin tức cho {count} cư dân.", "success")
+            return redirect(url_for('admin.index'))
+        
+        # 2. Nếu là Giao dịch (Thu phí) -> Khuyên dùng chức năng Ghi điện nước
+        else:
+            flash("Để tạo thu phí/hóa đơn chính xác, vui lòng dùng chức năng 'Ghi Điện/Nước' hoặc 'Thêm Giao dịch'.", "info")
+            return redirect(url_for('crud.record_indices'))
+
+    return render_template('admin/create_form.html', form=form, title='Gửi Thông Báo Chung')
+
 @crud.route('/billing/record', methods=['GET', 'POST'])
 def record_indices():
     form = GhiDienNuocForm()
@@ -180,25 +342,36 @@ def record_indices():
             phi_dien = LoaiPhi.query.filter_by(ten_phi="Phí điện").first()
             phi_nuoc = LoaiPhi.query.filter_by(ten_phi="Phí nước sinh hoạt").first()
             
+            # Tạo bill điện
             if phi_dien and (dien_moi - hk.so_dien) > 0:
                 amt = (dien_moi - hk.so_dien) * float(phi_dien.don_gia)
                 db.session.add(GiaoDich(nhan_khau_id=hk.chu_ho_id, ho_khau_id=hk.id, loai_phi_id=phi_dien.id, so_tien=amt, so_luong_tieu_thu=(dien_moi - hk.so_dien), don_gia_ap_dung=phi_dien.don_gia, phuong_thuc='Chưa nộp'))
             
+            # Tạo bill nước
             if phi_nuoc and (nuoc_moi - hk.so_nuoc) > 0:
                 amt = (nuoc_moi - hk.so_nuoc) * float(phi_nuoc.don_gia)
                 db.session.add(GiaoDich(nhan_khau_id=hk.chu_ho_id, ho_khau_id=hk.id, loai_phi_id=phi_nuoc.id, so_tien=amt, so_luong_tieu_thu=(nuoc_moi - hk.so_nuoc), don_gia_ap_dung=phi_nuoc.don_gia, phuong_thuc='Chưa nộp'))
 
             hk.so_dien, hk.so_nuoc = dien_moi, nuoc_moi
             
-            # Thông báo cho cả hộ
-            nk_ids = [nk.id for nk in NhanKhau.query.filter_by(id_ho_khau=hk.id).all()]
-            if nk_ids:
-                acc_ids = [tk.id for tk in TaiKhoan.query.filter(TaiKhoan.nhan_khau_id.in_(nk_ids)).all()]
-                for acc_id in acc_ids:
-                    db.session.add(ThongBao(nguoi_nhan_id=acc_id, noi_dung=f"Hóa đơn tháng {form.thang.data}", loai_thong_bao="Hóa đơn"))
+            # Gửi thông báo cho TẤT CẢ thành viên trong hộ
+            # 1. Lấy tất cả nhân khẩu thuộc hộ
+            members = NhanKhau.query.filter_by(id_ho_khau=hk.id).all()
+            member_ids = [m.id for m in members]
+            
+            # 2. Lấy tài khoản của những người đó
+            accounts = TaiKhoan.query.filter(TaiKhoan.nhan_khau_id.in_(member_ids)).all()
+            
+            # 3. Gửi thông báo
+            for acc in accounts:
+                db.session.add(ThongBao(
+                    nguoi_nhan_id=acc.id, 
+                    noi_dung=f"Đã có hóa đơn Điện/Nước tháng {form.thang.data}. Vui lòng kiểm tra và thanh toán.", 
+                    loai_thong_bao="Hóa đơn"
+                ))
             
             db.session.commit()
-            flash('Đã tạo hóa đơn', 'success')
+            flash('Đã ghi chỉ số và tạo hóa đơn thành công', 'success')
             return redirect(url_for('admin.index'))
         except Exception as e:
             db.session.rollback()
@@ -217,7 +390,7 @@ def pay_bill(gd_id):
         db.session.flush()
         gd.bien_lai_id = rec.id
         
-        # Xóa thông báo cả hộ
+        # Xóa thông báo cho cả hộ
         nk_ids = [nk.id for nk in NhanKhau.query.filter_by(id_ho_khau=gd.ho_khau_id).all()]
         if nk_ids:
             acc_ids = [tk.id for tk in TaiKhoan.query.filter(TaiKhoan.nhan_khau_id.in_(nk_ids)).all()]
@@ -289,36 +462,7 @@ def delete_tamtru(id):
     db.session.commit()
     return redirect(url_for('admin.index'))
 
-# [CẬP NHẬT] Gửi thông báo cho TẤT CẢ CƯ DÂN
-@crud.route('/thongbao/add', methods=['GET', 'POST'])
-def add_thongbao():
-    form = ThongBaoForm()
-    if form.validate_on_submit():
-        if form.loai_thong_bao.data == 'Thông tin':
-            all_residents = TaiKhoan.query.filter_by(role='resident').all()
-            if not all_residents:
-                flash("Không tìm thấy cư dân nào để gửi!", "warning")
-                return redirect(url_for('admin.index'))
-            
-            count = 0
-            for res in all_residents:
-                db.session.add(ThongBao(
-                    nguoi_nhan_id=res.id,
-                    noi_dung=form.noi_dung.data,
-                    loai_thong_bao='Hệ thống'
-                ))
-                count += 1
-            
-            db.session.commit()
-            flash(f"Đã gửi thông báo cho {count} cư dân.", "success")
-            return redirect(url_for('admin.index'))
-        else:
-            flash("Chức năng gửi Hóa đơn hàng loạt nên dùng 'Ghi Điện Nước'.", "info")
-            return redirect(url_for('crud.record_indices'))
-
-    return render_template('admin/create_form.html', form=form, title='Gửi Thông Báo Chung')
-
-# Trang duyệt yêu cầu
+# YÊU CẦU
 @crud.route('/requests', methods=['GET'])
 def list_requests():
     requests = YeuCau.query.order_by(YeuCau.ngay_gui.desc()).all()

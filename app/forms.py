@@ -5,38 +5,61 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 from .models import NhanKhau, HoKhau, LoaiPhi
 from datetime import date
 
-# Factory
-def nhan_khau_choices(): return NhanKhau.query.all()
+# Factory choices
+def nhan_khau_choices(): return NhanKhau.query.filter(NhanKhau.tinh_trang == 'Bình thường').all()
 def ho_khau_choices(): return HoKhau.query.all()
 def loai_phi_choices(): return LoaiPhi.query.order_by(LoaiPhi.ten_phi).all()
 
-# Form Tìm kiếm (Dùng chung)
+# --- FORM TÌM KIẾM ---
 class SearchForm(FlaskForm):
     search_term = StringField('Search', validators=[DataRequired()])
     submit = SubmitField('Tìm')
 
+# --- FORM NHÂN KHẨU ---
 class NhanKhauForm(FlaskForm):
     ho_ten = StringField('Họ tên', validators=[DataRequired()])
-    bi_danh = StringField('Bí danh', validators=[Optional()])
+    bi_danh = StringField('Bí danh', validators=[Optional()]) # Bí danh có thể không có
     ngay_sinh = DateField('Ngày sinh', validators=[DataRequired()])
-    gioi_tinh = SelectField('Giới tính', choices=[('Nam', 'Nam'), ('Nữ', 'Nữ')], validators=[DataRequired()])
-    nguyen_quan = StringField('Nguyên quán')
-    dan_toc = StringField('Dân tộc')
-    nghe_nghiep = StringField('Nghề nghiệp')
-    noi_lam_viec = StringField('Nơi làm việc')
+    gioi_tinh = SelectField('Giới tính', choices=[('Nam', 'Nam'), ('Nữ', 'Nữ'), ('Khác', 'Khác')], validators=[DataRequired()])
+    
+    # [CẬP NHẬT] Các trường cơ bản này bắt buộc phải điền
+    nguyen_quan = StringField('Nguyên quán', validators=[DataRequired()])
+    dan_toc = StringField('Dân tộc', validators=[DataRequired()])
+    
+    # Nghề nghiệp/Nơi làm việc có thể để trống (ví dụ trẻ em, người già)
+    nghe_nghiep = StringField('Nghề nghiệp', validators=[Optional()])
+    noi_lam_viec = StringField('Nơi làm việc', validators=[Optional()])
+    
+    # --- THÔNG TIN CCCD (Sẽ validate logic bên dưới) ---
     so_cccd = StringField('Số CCCD', validators=[Optional()])
     ngay_cap = DateField('Ngày cấp CCCD', validators=[Optional()])
-    noi_cap = StringField('Nơi cấp CCCD')
-    noi_thuong_tru = StringField('Nơi thường trú')
+    noi_cap = StringField('Nơi cấp CCCD', validators=[Optional()])
+    
+    noi_thuong_tru = StringField('Nơi thường trú', validators=[DataRequired()])
     tinh_trang = SelectField('Tình trạng', choices=[('Bình thường', 'Bình thường'), ('Tạm trú', 'Tạm trú'), ('Tạm vắng', 'Tạm vắng')], default='Bình thường')
     
-    def validate_so_cccd(form, field):
-        if form.ngay_sinh.data:
-            age = (date.today() - form.ngay_sinh.data).days // 365
-            if age >= 16 and not field.data:
-                raise ValidationError("Trên 16 tuổi phải có CCCD")
     submit = SubmitField('Lưu')
 
+    # [LOGIC MỚI] Kiểm tra tuổi để bắt buộc nhập CCCD
+    def check_age_requirement(self, field, field_name):
+        if self.ngay_sinh.data:
+            # Tính tuổi chính xác
+            today = date.today()
+            age = today.year - self.ngay_sinh.data.year - ((today.month, today.day) < (self.ngay_sinh.data.month, self.ngay_sinh.data.day))
+            
+            if age >= 16 and not field.data:
+                raise ValidationError(f"Công dân từ 16 tuổi trở lên bắt buộc phải điền {field_name}.")
+
+    def validate_so_cccd(form, field):
+        form.check_age_requirement(field, "Số CCCD")
+
+    def validate_ngay_cap(form, field):
+        form.check_age_requirement(field, "Ngày cấp CCCD")
+
+    def validate_noi_cap(form, field):
+        form.check_age_requirement(field, "Nơi cấp CCCD")
+
+# --- FORM HỘ KHẨU ---
 class HoKhauForm(FlaskForm):
     ma_so_ho_khau = StringField('Mã Hộ khẩu', validators=[DataRequired()])
     chu_ho = QuerySelectField('Chủ hộ', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=True, get_pk=lambda x: x.id)
@@ -51,7 +74,44 @@ class NhanKhauHoKhauForm(FlaskForm):
     nhan_khau = QuerySelectField('Nhân khẩu', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
     ho_khau = QuerySelectField('Hộ khẩu', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=False)
     quan_he_chu_ho = StringField('Quan hệ với chủ hộ', validators=[DataRequired()])
-    submit = SubmitField('Thêm')
+    submit = SubmitField('Thêm vào Hộ')
+
+# --- FORM TÁCH KHẨU ---
+class TachKhauForm(FlaskForm):
+    nhan_khau = QuerySelectField('Người tách', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
+    loai_tach = SelectField('Hình thức', choices=[('new', 'Lập hộ mới'), ('existing', 'Chuyển sang Hộ khác')], default='new')
+    ho_khau_dich = QuerySelectField('Hộ đích (Nếu chuyển)', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=True)
+    quan_he_moi = StringField('Quan hệ với chủ hộ mới')
+    dia_chi_moi = StringField('Địa chỉ mới (Nếu lập hộ mới)')
+    submit = SubmitField('Thực hiện Tách')
+
+# --- FORM KHAI SINH & KHAI TỬ ---
+class KhaiSinhForm(FlaskForm):
+    ho_ten = StringField('Họ tên trẻ', validators=[DataRequired()])
+    gioi_tinh = SelectField('Giới tính', choices=[('Nam', 'Nam'), ('Nữ', 'Nữ')], validators=[DataRequired()])
+    ngay_sinh = DateField('Ngày sinh', validators=[DataRequired()], default=date.today)
+    ho_khau = QuerySelectField('Thuộc Hộ khẩu', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=False)
+    quan_he_chu_ho = StringField('Quan hệ với chủ hộ', validators=[DataRequired()], default="Con")
+    nguyen_quan = StringField('Nguyên quán', validators=[DataRequired()]) # Bắt buộc
+    dan_toc = StringField('Dân tộc', default='Kinh', validators=[DataRequired()]) # Bắt buộc
+    submit = SubmitField('Khai Sinh')
+
+class KhaiTuForm(FlaskForm):
+    nhan_khau = QuerySelectField('Người mất', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
+    ngay_mat = DateField('Ngày mất', validators=[DataRequired()], default=date.today)
+    ly_do = TextAreaField('Lý do mất', validators=[DataRequired()])
+    submit = SubmitField('Xác nhận Khai Tử')
+
+# --- FORM THÔNG BÁO & PHÍ ---
+class ThongBaoForm(FlaskForm):
+    loai_thong_bao = RadioField('Loại Thông báo', 
+                                choices=[('Thông tin', 'Chỉ Thông báo tin tức'), 
+                                         ('Giao dịch', 'Thông báo thu phí')], 
+                                default='Thông tin',
+                                validators=[DataRequired()])
+    noi_dung = TextAreaField('Nội dung', validators=[DataRequired()])
+    loai_phi = SelectField('Loại phí', coerce=int, validators=[Optional()]) 
+    submit = SubmitField('Gửi Thông Báo')
 
 class GhiDienNuocForm(FlaskForm):
     ho_khau = QuerySelectField('Hộ khẩu', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=False)
@@ -59,14 +119,6 @@ class GhiDienNuocForm(FlaskForm):
     chi_so_dien_moi = IntegerField('Điện Mới', validators=[DataRequired()])
     chi_so_nuoc_moi = IntegerField('Nước Mới', validators=[DataRequired()])
     submit = SubmitField('Tính tiền')
-
-class TachKhauForm(FlaskForm):
-    nhan_khau = QuerySelectField('Người tách', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
-    loai_tach = SelectField('Hình thức', choices=[('new', 'Lập hộ mới'), ('existing', 'Chuyển hộ')], default='new')
-    ho_khau_dich = QuerySelectField('Hộ đích', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=True)
-    quan_he_moi = StringField('Quan hệ mới')
-    dia_chi_moi = StringField('Địa chỉ mới')
-    submit = SubmitField('Tách')
 
 class LoaiPhiForm(FlaskForm):
     ten_phi = StringField('Tên phí', validators=[DataRequired()])
@@ -90,12 +142,6 @@ class TamTruForm(FlaskForm):
     ngay_ket_thuc = DateField('Đến ngày', validators=[DataRequired()])
     ly_do = TextAreaField('Lý do')
     submit = SubmitField('Đăng ký')
-
-class ThongBaoForm(FlaskForm):
-    loai_thong_bao = RadioField('Loại', choices=[('Thông tin', 'Thông tin'), ('Hóa đơn', 'Hóa đơn')], default='Thông tin')
-    noi_dung = TextAreaField('Nội dung', validators=[DataRequired()])
-    loai_phi = SelectField('Loại phí', coerce=int, validators=[Optional()])
-    submit = SubmitField('Gửi')
 
 class ChangePasswordForm(FlaskForm):
     old_password = PasswordField('Mật khẩu hiện tại', validators=[DataRequired()])
