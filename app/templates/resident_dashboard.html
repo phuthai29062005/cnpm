@@ -218,6 +218,7 @@
         }
         
         .notification-item {
+            position: relative; /* Quan trọng để nút xóa căn theo item */
             border: none;
             border-bottom: 1px solid #eee;
             padding: 15px 20px;
@@ -259,6 +260,26 @@
         .notification-icon.warning {
             background: rgba(243, 156, 18, 0.1);
             color: var(--warning);
+        }
+
+        /* [MỚI] Style nút xóa thông báo */
+        .btn-delete-noti {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #bdc3c7;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            padding: 5px;
+            z-index: 10;
+        }
+        
+        .btn-delete-noti:hover {
+            color: var(--danger);
+            transform: scale(1.1);
         }
         
         /* Profile Info */
@@ -541,7 +562,6 @@
         {% endwith %}
 
         <div class="row g-4">
-            <!-- Notifications Column -->
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
@@ -557,13 +577,20 @@
                                         <div class="notification-icon {% if tb.loai_thong_bao == 'Hóa đơn' %}bill{% else %}info{% endif %}">
                                             <i class="fas fa-{% if tb.loai_thong_bao == 'Hóa đơn' %}money-bill-wave{% else %}info-circle{% endif %}"></i>
                                         </div>
-                                        <div class="flex-grow-1">
+                                        <div class="flex-grow-1 pe-4"> 
                                             <p class="mb-1">
                                                 <strong>{{ tb.loai_thong_bao }}</strong><br>
                                                 {{ tb.noi_dung }}
                                             </p>
                                             <small class="text-muted">{{ tb.ngay_tao.strftime('%d/%m/%Y %H:%M') }}</small>
                                         </div>
+                                        
+                                        <a href="{{ url_for('main.delete_notification', id=tb.id) }}" 
+                                           class="btn-delete-noti" 
+                                           onclick="return confirm('Bạn muốn xóa thông báo này?');"
+                                           title="Xóa thông báo">
+                                            <i class="fas fa-times"></i>
+                                        </a>
                                     </div>
                                 {% endfor %}
                             {% else %}
@@ -578,9 +605,7 @@
                 </div>
             </div>
 
-            <!-- Main Content Column -->
             <div class="col-lg-8">
-                <!-- Personal Information -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <div class="card-header-content">
@@ -627,7 +652,6 @@
                     </div>
                 </div>
 
-                <!-- Household Information -->
                 <div class="card">
                     <div class="card-header">
                         <div class="card-header-content">
@@ -636,7 +660,6 @@
                     </div>
                     <div class="card-body">
                         {% if hokhau %}
-                            <!-- Household Stats -->
                             <div class="household-stats">
                                 <div class="stat-card">
                                     <div class="stat-icon electric">
@@ -661,7 +684,6 @@
                                 </div>
                             </div>
 
-                            <!-- Household Details -->
                             <div class="info-grid mb-4">
                                 <div class="info-item">
                                     <div class="info-label">Mã Hộ khẩu</div>
@@ -677,7 +699,6 @@
                                 </div>
                             </div>
 
-                            <!-- Household Members -->
                             <h6 class="mb-3" style="color: var(--secondary);">
                                 <i class="fas fa-users me-2"></i>Thành viên trong hộ
                             </h6>
@@ -714,7 +735,6 @@
                                 </table>
                             </div>
 
-                            <!-- Pending Bills -->
                             <h6 class="mb-3" style="color: var(--danger);">
                                 <i class="fas fa-money-bill-wave me-2"></i>Các khoản phí đang chờ
                             </h6>
@@ -787,14 +807,6 @@
                         this.disabled = false;
                     }, 3000);
                 }
-            });
-        });
-
-        // Mark notifications as read when clicked
-        document.querySelectorAll('.notification-item.unread').forEach(item => {
-            item.addEventListener('click', function() {
-                this.classList.remove('unread');
-                // Here you would typically make an API call to mark as read
             });
         });
     </script>

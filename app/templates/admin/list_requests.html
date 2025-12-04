@@ -478,8 +478,8 @@
                         <tr>
                             <td><strong>{{ req.ngay_gui.strftime('%d/%m/%Y %H:%M') }}</strong></td>
                             <td>
-                                <div><strong>{{ req.ngoi_gui.ho_ten }}</strong></div>
-                                <div style="font-size: 0.8rem; color: var(--gray-dark);">@{{ req.ngoi_gui.username }}</div>
+                                <div><strong>{{ req.nguoi_gui.ho_ten }}</strong></div>
+                                <div style="font-size: 0.8rem; color: var(--gray-dark);">@{{ req.nguoi_gui.username }}</div>
                             </td>
                             <td>
                                 <span class="priority-{{ 'high' if req.loai_yeu_cau in ['sửa chữa', 'khiếu nại'] else 'medium' if req.loai_yeu_cau == 'đề xuất' else 'low' }}">

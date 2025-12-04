@@ -395,6 +395,18 @@
                     {% endif %}
                 {% endwith %}
                 
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul class="mb-0 ps-3">
+                        {% for field, errors in form.errors.items() %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
                 <form method="POST" id="requestForm">
                     {{ form.hidden_tag() }}
                     
@@ -455,7 +467,6 @@
                     </div>
                 </form>
                 
-                <!-- Quick Suggestions -->
                 <div class="mt-4">
                     <h6 class="text-muted mb-3">
                         <i class="fas fa-lightbulb me-2"></i>Gợi ý nhanh:
@@ -561,10 +572,8 @@
             submitBtn.innerHTML = '<div class="loading"></div> Đang gửi...';
             submitBtn.disabled = true;
             
-            setTimeout(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }, 3000);
+            // [FIX] Bỏ đoạn tự động bật lại nút sau 3s để tránh xung đột
+            // Nút sẽ tự reset khi trang được tải lại
         });
 
         // Ripple effect for buttons

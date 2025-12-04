@@ -147,3 +147,28 @@ def pay_online(bill_id):
         flash(f"Lỗi giao dịch: {str(e)}", "danger")
 
     return redirect(url_for('main.dashboard'))
+
+@main.route("/notification/delete/<int:id>")
+@login_required
+def delete_notification(id):
+    # Chỉ cho phép resident thực hiện
+    if current_user.role != 'resident':
+        abort(403)
+        
+    # Tìm thông báo theo ID
+    noti = ThongBao.query.get_or_404(id)
+    
+    # Bảo mật: Kiểm tra xem thông báo này có đúng là của người đang đăng nhập không
+    if noti.nguoi_nhan_id != current_user.id:
+        flash("Bạn không có quyền xóa thông báo này.", "danger")
+        return redirect(url_for('main.dashboard'))
+        
+    try:
+        db.session.delete(noti)
+        db.session.commit()
+        flash("Đã xóa thông báo.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Lỗi khi xóa: {str(e)}", "danger")
+        
+    return redirect(url_for('main.dashboard'))
