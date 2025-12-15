@@ -3,6 +3,7 @@ from flask_login import current_user
 from flask import flash, redirect, url_for, request
 from sqlalchemy import func, or_
 from .models import db, NhanKhau, HoKhau, TamTru, TamVang, GiaoDich, YeuCau, LichSuHoKhau
+from datetime import date
 
 class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
@@ -25,18 +26,29 @@ class MyAdminIndexView(AdminIndexView):
             total_doanhthu = "{:,.0f}".format(paid)
             pending_bills = db.session.query(GiaoDich).filter_by(trang_thai='Đang chờ').count()
 
-            # Query Nhân khẩu (Có search)
+            # [MỚI] Thống kê Gender & Age
+            all_nk_stats = db.session.query(NhanKhau.ngay_sinh, NhanKhau.gioi_tinh).all()
+            stat_gender = {'Nam': 0, 'Nu': 0, 'Khac': 0}
+            stat_age = {'TreEm': 0, 'LaoDong': 0, 'NghiHuu': 0} # <15, 15-60, >60
+            
+            today = date.today()
+            for dob, gender in all_nk_stats:
+                if gender == 'Nam': stat_gender['Nam'] += 1
+                elif gender == 'Nữ': stat_gender['Nu'] += 1
+                else: stat_gender['Khac'] += 1
+                
+                if dob:
+                    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                    if age < 15: stat_age['TreEm'] += 1
+                    elif 15 <= age <= 60: stat_age['LaoDong'] += 1
+                    else: stat_age['NghiHuu'] += 1
+
+            # Query Search
             nhankhau_q = db.session.query(NhanKhau)
             if search_query:
-                nhankhau_q = nhankhau_q.filter(
-                    or_(
-                        NhanKhau.ho_ten.ilike(f'%{search_query}%'),
-                        NhanKhau.so_cccd.ilike(f'%{search_query}%')
-                    )
-                )
+                nhankhau_q = nhankhau_q.filter(or_(NhanKhau.ho_ten.ilike(f'%{search_query}%'), NhanKhau.so_cccd.ilike(f'%{search_query}%')))
             all_nhankhau = nhankhau_q.order_by(NhanKhau.id.desc()).all()
 
-            # Query Hộ khẩu (Có search)
             hokhau_q = db.session.query(HoKhau)
             if search_query:
                 hokhau_q = hokhau_q.filter(HoKhau.ma_so_ho_khau.ilike(f'%{search_query}%'))
@@ -44,8 +56,6 @@ class MyAdminIndexView(AdminIndexView):
 
             all_giaodich = db.session.query(GiaoDich).order_by(GiaoDich.id.desc()).limit(20).all()
             all_tamtru = db.session.query(TamTru).order_by(TamTru.ngay_bat_dau.desc()).all()
-
-            # Data 2 bảng lịch sử
             all_logs = db.session.query(LichSuHoKhau).order_by(LichSuHoKhau.ngay_thuc_hien.desc()).limit(50).all()
             all_requests = db.session.query(YeuCau).order_by(YeuCau.ngay_gui.desc()).limit(50).all()
 
@@ -53,6 +63,8 @@ class MyAdminIndexView(AdminIndexView):
             flash(f"Lỗi tải Dashboard: {e}", "danger")
             total_nhankhau = total_hokhau = total_tamtru = total_tamvang = pending_bills = 0
             total_doanhthu = "0"
+            stat_gender = {'Nam': 0, 'Nu': 0, 'Khac': 0}
+            stat_age = {'TreEm': 0, 'LaoDong': 0, 'NghiHuu': 0}
             all_nhankhau = all_hokhau = all_giaodich = all_tamtru = all_logs = all_requests = []
             search_query = ''
             
@@ -63,6 +75,8 @@ class MyAdminIndexView(AdminIndexView):
                            total_tamvang=total_tamvang,
                            total_doanhthu=total_doanhthu,
                            pending_bills=pending_bills,
+                           stat_gender=stat_gender,
+                           stat_age=stat_age,
                            all_nhankhau=all_nhankhau,
                            all_hokhau=all_hokhau,
                            all_tamtru=all_tamtru,

@@ -5,7 +5,6 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 from .models import NhanKhau, HoKhau, LoaiPhi
 from datetime import date
 
-# Factory choices
 def nhan_khau_choices(): return NhanKhau.query.filter(NhanKhau.tinh_trang == 'Bình thường').all()
 def ho_khau_choices(): return HoKhau.query.all()
 def loai_phi_choices(): return LoaiPhi.query.order_by(LoaiPhi.ten_phi).all()
@@ -21,20 +20,15 @@ class NhanKhauForm(FlaskForm):
     bi_danh = StringField('Bí danh', validators=[Optional(), Length(max=50)])
     ngay_sinh = DateField('Ngày sinh', validators=[DataRequired()])
     gioi_tinh = SelectField('Giới tính', choices=[('Nam', 'Nam'), ('Nữ', 'Nữ'), ('Khác', 'Khác')], validators=[DataRequired()])
-    
     nguyen_quan = StringField('Nguyên quán', validators=[DataRequired(), Length(max=255)])
     dan_toc = StringField('Dân tộc', validators=[DataRequired(), Length(max=50)])
-    
     nghe_nghiep = StringField('Nghề nghiệp', validators=[Optional(), Length(max=100)])
     noi_lam_viec = StringField('Nơi làm việc', validators=[Optional(), Length(max=100)])
-    
     so_cccd = StringField('Số CCCD', validators=[Optional(), Length(max=12)])
     ngay_cap = DateField('Ngày cấp CCCD', validators=[Optional()])
     noi_cap = StringField('Nơi cấp CCCD', validators=[Optional(), Length(max=100)])
-    
     noi_thuong_tru = StringField('Nơi thường trú', validators=[DataRequired(), Length(max=255)])
     tinh_trang = SelectField('Tình trạng', choices=[('Bình thường', 'Bình thường'), ('Tạm trú', 'Tạm trú'), ('Tạm vắng', 'Tạm vắng')], default='Bình thường')
-    
     submit = SubmitField('Lưu')
 
     def check_age_requirement(self, field, field_name):
@@ -44,14 +38,9 @@ class NhanKhauForm(FlaskForm):
             if age >= 16 and not field.data:
                 raise ValidationError(f"Công dân từ 16 tuổi trở lên bắt buộc phải điền {field_name}.")
 
-    def validate_so_cccd(form, field):
-        form.check_age_requirement(field, "Số CCCD")
-
-    def validate_ngay_cap(form, field):
-        form.check_age_requirement(field, "Ngày cấp CCCD")
-
-    def validate_noi_cap(form, field):
-        form.check_age_requirement(field, "Nơi cấp CCCD")
+    def validate_so_cccd(form, field): form.check_age_requirement(field, "Số CCCD")
+    def validate_ngay_cap(form, field): form.check_age_requirement(field, "Ngày cấp CCCD")
+    def validate_noi_cap(form, field): form.check_age_requirement(field, "Nơi cấp CCCD")
 
 # --- FORM HỘ KHẨU ---
 class HoKhauForm(FlaskForm):
@@ -94,14 +83,9 @@ class KhaiTuForm(FlaskForm):
     ly_do = TextAreaField('Lý do mất', validators=[DataRequired()])
     submit = SubmitField('Xác nhận Khai Tử')
 
+# [FIX] FORM THÔNG BÁO ĐƠN GIẢN HÓA
 class ThongBaoForm(FlaskForm):
-    loai_thong_bao = RadioField('Loại Thông báo', 
-                                choices=[('Thông tin', 'Chỉ Thông báo tin tức'), 
-                                         ('Giao dịch', 'Thông báo thu phí')], 
-                                default='Thông tin',
-                                validators=[DataRequired()])
-    noi_dung = TextAreaField('Nội dung', validators=[DataRequired()])
-    loai_phi = SelectField('Loại phí', coerce=int, validators=[Optional()]) 
+    noi_dung = TextAreaField('Nội dung thông báo', validators=[DataRequired()])
     submit = SubmitField('Gửi Thông Báo')
 
 class GhiDienNuocForm(FlaskForm):
@@ -140,18 +124,11 @@ class ChangePasswordForm(FlaskForm):
     confirm_password = PasswordField('Nhập lại mật khẩu mới', validators=[DataRequired(), EqualTo('new_password', message='Mật khẩu không khớp')])
     submit = SubmitField('Lưu thay đổi')
 
-# [QUAN TRỌNG] Cập nhật choices khớp với giao diện Resident
 class YeuCauForm(FlaskForm):
     loai_yeu_cau = SelectField('Loại yêu cầu', 
-                               choices=[('sửa chữa', 'Sửa chữa'), 
-                                        ('khiếu nại', 'Khiếu nại'), 
-                                        ('đề xuất', 'Đề xuất'), 
-                                        ('khác', 'Khác'),
-                                        # Giữ lại các loại cũ nếu cần admin dùng
-                                        ('Tách khẩu', 'Xin Tách khẩu'),
-                                        ('Chuyển hộ', 'Xin Chuyển hộ'),
-                                        ('Tạm trú', 'Đăng ký Tạm trú'),
-                                        ('Tạm vắng', 'Đăng ký Tạm vắng')],
+                               choices=[('sửa chữa', 'Sửa chữa'), ('khiếu nại', 'Khiếu nại'), ('đề xuất', 'Đề xuất'), ('khác', 'Khác'),
+                                        ('Tách khẩu', 'Xin Tách khẩu'), ('Chuyển hộ', 'Xin Chuyển hộ'),
+                                        ('Tạm trú', 'Đăng ký Tạm trú'), ('Tạm vắng', 'Đăng ký Tạm vắng')],
                                validators=[DataRequired(), Length(max=50)])
     noi_dung = TextAreaField('Nội dung chi tiết', validators=[DataRequired()])
     submit = SubmitField('Gửi Yêu Cầu')

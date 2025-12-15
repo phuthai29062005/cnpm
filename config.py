@@ -21,3 +21,4 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = "mssql+pyodbc:///?odbc_connect=" + urllib.parse.quote_plus(CONNECTION_STRING)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
