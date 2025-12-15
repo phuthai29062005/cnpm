@@ -5,10 +5,10 @@ class Config:
     SECRET_KEY = "secret-key-thay-sau"
     
     DRIVER = "ODBC Driver 18 for SQL Server"
-    SERVER = "127.0.0.1,1433"            # hoặc IP máy thật
+    SERVER = "MSI"            # hoặc IP máy thật #MSI
     DATABASE = "project1"
     USERNAME = "sa"
-    PASSWORD = "Phuthai2906@"
+    PASSWORD = "Minh_26102005" #Minh_26102005
 
     CONNECTION_STRING = (
         f"DRIVER={{{DRIVER}}};"
