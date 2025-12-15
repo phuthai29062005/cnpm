@@ -9,48 +9,38 @@ from flask_admin import Admin
 from werkzeug.security import generate_password_hash
 import click 
 from sqlalchemy import text 
-from datetime import datetime, date 
+from datetime import datetime, date, timedelta
+import random
 
 login_manager = LoginManager()
 
-# --- HÀM NỘI BỘ ---
-
 def _create_admin():
-    """Hàm nội bộ: Tạo tài khoản admin."""
-    print("--- Tạo tài khoản Admin ---")
     if not TaiKhoan.query.filter_by(role='admin').first():
         new_admin = TaiKhoan(username='admin', password_hash=generate_password_hash('123456'), ho_ten='Administrator', role='admin')
         db.session.add(new_admin)
         db.session.commit()
         print("Đã tạo admin/123456")
-    else:
-        print("Admin đã tồn tại.")
 
 def _seed_fees():
-    """Hàm nội bộ: Gieo mầm phí."""
-    print("--- Gieo mầm phí ---")
     fees = [
         ("Phí vệ sinh môi trường", True, 60000, "VND/Hộ"),
         ("Phí điện", True, 3000, "VND/kWh"),
         ("Phí nước sinh hoạt", True, 10000, "VND/m3"),
         ("Phí quản lý chung cư", True, 5000, "VND/m2")
     ]
-    count = 0
     for name, bb, gia, dv in fees:
         fee = LoaiPhi.query.filter_by(ten_phi=name).first()
         if not fee:
             db.session.add(LoaiPhi(ten_phi=name, bat_buoc=bb, don_gia=gia, don_vi=dv))
-            count += 1
         else:
             fee.don_gia = gia
             fee.don_vi = dv
-    
-    # [FIX] Di dời lệnh commit ra khỏi 'if count > 0'
-    # để đảm bảo các bản cập nhật giá (else) cũng được lưu.
     db.session.commit()
-    
-    print(f"Đã cập nhật {len(fees)} loại phí.")
 
+def _random_dob(start_year, end_year):
+    start = date(start_year, 1, 1)
+    end = date(end_year, 12, 31)
+    return start + timedelta(days=random.randint(0, (end - start).days))
 
 def create_app():
     app = Flask(__name__)
@@ -78,121 +68,116 @@ def create_app():
     from .crud_routes import crud
     app.register_blueprint(crud)
 
-    # --- CLI COMMAND ---
-
     @app.cli.command("seed-data")
     def seed_data():
-        """[CLEANUP] Xóa sạch và Tạo mới 3 hộ gia đình (Dữ liệu thực tế)."""
-        print("--- BƯỚC 1: ĐANG DỌN SẠCH DATABASE ---")
-        
-        # 1. Xóa ThuChi
+        """[CLEANUP] Xóa sạch và Tạo mới 100 hộ + 10 tạm trú."""
+        print("--- BƯỚC 1: DỌN SẠCH DATABASE ---")
         db.session.query(ThuChi).delete()
-        
-        # 2. Xóa GiaoDich
-        GiaoDich.query.update({
-            GiaoDich.bien_lai_id: None,
-            GiaoDich.thong_bao_id: None
-        })
+        GiaoDich.query.update({GiaoDich.bien_lai_id: None, GiaoDich.thong_bao_id: None})
+        db.session.commit(); db.session.query(GiaoDich).delete()
+        db.session.query(BienLai).delete(); db.session.query(ThongBao).delete()
+        db.session.query(LichSuHoKhau).delete(); db.session.query(ChiSoDienNuoc).delete()
+        db.session.query(NhanKhauHoKhau).delete(); db.session.query(TamTru).delete()
+        db.session.query(TamVang).delete(); db.session.query(YeuCau).delete()
+        TaiKhoan.query.update({TaiKhoan.nhan_khau_id: None}); db.session.commit(); db.session.query(TaiKhoan).delete()
+        NhanKhau.query.update({NhanKhau.id_ho_khau: None}); HoKhau.query.update({HoKhau.chu_ho_id: None}); db.session.commit()
+        db.session.query(HoKhau).delete(); db.session.query(NhanKhau).delete(); db.session.commit()
+
+        print("--- BƯỚC 2: TẠO DỮ LIỆU ---")
+        _seed_fees(); _create_admin()
+
+        jobs = ["Kỹ sư", "Bác sĩ", "Giáo viên", "Công nhân", "Kinh doanh", "Nội trợ", "Học sinh", "Sinh viên", "Lập trình viên", "Kế toán", "Luật sư", "Tài xế", "Bảo vệ", "Hưu trí", "Buôn bán tự do"]
+        last_names = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý"]
+        middle_names = ["Văn", "Thị", "Hữu", "Minh", "Ngọc", "Thanh", "Đức", "Quang", "Mạnh", "Thu", "Hồng"]
+        first_names = ["Hùng", "Lan", "Anh", "Bình", "Mai", "Dũng", "Hoa", "Tuấn", "Hương", "Long", "Thảo", "Huy", "Trang", "Nam", "Linh"]
+
+        def random_name(gender):
+            ln = random.choice(last_names)
+            mn = "Thị" if gender == "Nữ" else random.choice([m for m in middle_names if m != "Thị"])
+            fn = random.choice(first_names)
+            return f"{ln} {mn} {fn}"
+
+        # Tạo 100 Hộ
+        for i in range(1, 101):
+            num_members = random.randint(1, 7)
+            head_dob = _random_dob(1970, 1995)
+            head_gender = random.choice(["Nam", "Nữ"])
+            head_name = random_name(head_gender)
+            head_cccd = f"001{head_dob.year}{i:05d}"
+
+            chu_ho = NhanKhau(
+                ho_ten=head_name, ngay_sinh=head_dob, gioi_tinh=head_gender, so_cccd=head_cccd, 
+                nghe_nghiep=random.choice(jobs), nguyen_quan="Hà Nội", dan_toc="Kinh",
+                noi_thuong_tru=f"Số {i}, Phố Đại Từ, Đại Kim, Hoàng Mai"
+            )
+            db.session.add(chu_ho); db.session.commit()
+
+            hk = HoKhau(
+                ma_so_ho_khau=f"HK-DK-{i:03d}", chu_ho_id=chu_ho.id, 
+                so_nha=f"Số {i}", duong_pho="Phố Đại Từ", phuong_xa="Phường Đại Kim", quan_huyen="Quận Hoàng Mai", 
+                so_dien=random.randint(100, 600), so_nuoc=random.randint(10, 50)
+            )
+            db.session.add(hk); db.session.commit()
+
+            chu_ho.id_ho_khau = hk.id
+            db.session.add(NhanKhauHoKhau(nhan_khau_id=chu_ho.id, ho_khau_id=hk.id, quan_he_chu_ho="Chủ hộ"))
+            db.session.add(TaiKhoan(username=chu_ho.so_cccd, password_hash=generate_password_hash("1"), ho_ten=chu_ho.ho_ten, role="resident", nhan_khau_id=chu_ho.id))
+
+            members_created = 1
+            has_spouse = False
+            while members_created < num_members:
+                rel, mem_gender, mem_dob = "", "", date.today()
+                if not has_spouse:
+                    rel = "Vợ" if head_gender == "Nam" else "Chồng"
+                    mem_gender = "Nữ" if head_gender == "Nam" else "Nam"
+                    mem_dob = _random_dob(head_dob.year - 5, head_dob.year + 5)
+                    has_spouse = True
+                elif members_created < 5:
+                    rel = "Con"
+                    mem_gender = random.choice(["Nam", "Nữ"])
+                    mem_dob = _random_dob(head_dob.year + 20, 2023)
+                else:
+                    rel = random.choice(["Bố", "Mẹ"])
+                    mem_gender = "Nam" if rel == "Bố" else "Nữ"
+                    mem_dob = _random_dob(head_dob.year - 30, head_dob.year - 20)
+
+                mem_job = "Học sinh" if (2025 - mem_dob.year) < 18 else random.choice(jobs)
+                mem_cccd = None
+                if (2025 - mem_dob.year) >= 14:
+                    mem_cccd = f"0{random.randint(10,99)}{mem_dob.year}{random.randint(10000,99999)}"
+
+                mem = NhanKhau(
+                    ho_ten=random_name(mem_gender), ngay_sinh=mem_dob, gioi_tinh=mem_gender, so_cccd=mem_cccd,
+                    id_ho_khau=hk.id, nghe_nghiep=mem_job, nguyen_quan=chu_ho.nguyen_quan, dan_toc="Kinh",
+                    noi_thuong_tru=chu_ho.noi_thuong_tru
+                )
+                db.session.add(mem); db.session.commit()
+                db.session.add(NhanKhauHoKhau(nhan_khau_id=mem.id, ho_khau_id=hk.id, quan_he_chu_ho=rel))
+                if mem.so_cccd:
+                    db.session.add(TaiKhoan(username=mem.so_cccd, password_hash=generate_password_hash("1"), ho_ten=mem.ho_ten, role="resident", nhan_khau_id=mem.id))
+                members_created += 1
+
+        # Tạo 10 người tạm trú
+        print("--- Tạo 10 người tạm trú ---")
+        for k in range(1, 11):
+            tmp_dob = _random_dob(1995, 2003)
+            tmp_name = random_name("Nam" if k % 2 == 0 else "Nữ")
+            tmp_cccd = f"099{tmp_dob.year}{random.randint(10000, 99999)}"
+            
+            tmp_nk = NhanKhau(
+                ho_ten=tmp_name, ngay_sinh=tmp_dob, gioi_tinh=("Nam" if k % 2 == 0 else "Nữ"), so_cccd=tmp_cccd,
+                nghe_nghiep="Lao động tự do", tinh_trang="Tạm trú", nguyen_quan="Nghệ An", noi_thuong_tru="Quê quán: Nghệ An"
+            )
+            db.session.add(tmp_nk); db.session.commit()
+
+            tt = TamTru(
+                resident_id=tmp_nk.id, noi_tam_tru=f"Số {random.randint(1,100)}, Phố Đại Từ, Đại Kim",
+                ngay_bat_dau=date(2024, 1, 1), ngay_ket_thuc=date(2025, 12, 31), ly_do="Đi làm", status="Approved"
+            )
+            db.session.add(tt)
+            db.session.add(TaiKhoan(username=tmp_cccd, password_hash=generate_password_hash("1"), ho_ten=tmp_name, role="resident", nhan_khau_id=tmp_nk.id))
+
         db.session.commit()
-        db.session.query(GiaoDich).delete()
-
-        # 3. Xóa các bảng con/phụ thuộc khác
-        db.session.query(BienLai).delete()
-        db.session.query(ThongBao).delete()
-        db.session.query(LichSuHoKhau).delete()
-        db.session.query(ChiSoDienNuoc).delete()
-        db.session.query(NhanKhauHoKhau).delete()
-        db.session.query(TamTru).delete()
-        db.session.query(TamVang).delete()
-        db.session.query(YeuCau).delete()
-        
-        # 4. Xóa TaiKhoan
-        TaiKhoan.query.update({TaiKhoan.nhan_khau_id: None})
-        db.session.commit()
-        db.session.query(TaiKhoan).delete()
-
-        # 5. Xóa HoKhau và NhanKhau
-        NhanKhau.query.update({NhanKhau.id_ho_khau: None})
-        HoKhau.query.update({HoKhau.chu_ho_id: None})
-        db.session.commit()
-        
-        db.session.query(HoKhau).delete()
-        db.session.query(NhanKhau).delete()
-        
-        db.session.commit()
-        print("--- ĐÃ DỌN SẠCH ---")
-
-        print("--- BƯỚC 2: Đang tạo dữ liệu mẫu thực tế ---")
-        _seed_fees()
-        _create_admin()
-
-        # === HỘ 1: Gia đình Nguyễn Văn Hùng ===
-        nk1_hung = NhanKhau(ho_ten="Nguyễn Văn Hùng", ngay_sinh=date(1980, 5, 15), gioi_tinh="Nam", so_cccd="001080001234", nghe_nghiep="Kỹ sư")
-        nk1_lan = NhanKhau(ho_ten="Trần Thị Lan", ngay_sinh=date(1982, 8, 30), gioi_tinh="Nữ", so_cccd="001182004567", nghe_nghiep="Kế toán")
-        nk1_anh = NhanKhau(ho_ten="Nguyễn Tuấn Anh", ngay_sinh=date(2010, 1, 10), gioi_tinh="Nam", nghe_nghiep="Học sinh")
-        db.session.add_all([nk1_hung, nk1_lan, nk1_anh])
-        db.session.commit()
-
-        hk1 = HoKhau(ma_so_ho_khau="HM-DK-001", chu_ho_id=nk1_hung.id, 
-                     so_nha="Số 10, ngõ 5", duong_pho="Phố Đại Từ", 
-                     phuong_xa="Đại Kim", quan_huyen="Hoàng Mai", 
-                     so_dien=100, so_nuoc=50)
-        db.session.add(hk1)
-        db.session.commit()
-
-        # Link HK1
-        nk1_hung.id_ho_khau = hk1.id
-        db.session.add(NhanKhauHoKhau(nhan_khau_id=nk1_hung.id, ho_khau_id=hk1.id, quan_he_chu_ho="Chủ hộ"))
-        db.session.add(TaiKhoan(username="001080001234", password_hash=generate_password_hash("1"), ho_ten=nk1_hung.ho_ten, role="resident", nhan_khau_id=nk1_hung.id))
-        
-        nk1_lan.id_ho_khau = hk1.id
-        db.session.add(NhanKhauHoKhau(nhan_khau_id=nk1_lan.id, ho_khau_id=hk1.id, quan_he_chu_ho="Vợ"))
-        db.session.add(TaiKhoan(username="001182004567", password_hash=generate_password_hash("1"), ho_ten=nk1_lan.ho_ten, role="resident", nhan_khau_id=nk1_lan.id))
-
-        nk1_anh.id_ho_khau = hk1.id
-        db.session.add(NhanKhauHoKhau(nhan_khau_id=nk1_anh.id, ho_khau_id=hk1.id, quan_he_chu_ho="Con trai"))
-
-        # === HỘ 2: Gia đình Lê Minh Bình ===
-        nk2_binh = NhanKhau(ho_ten="Lê Minh Bình", ngay_sinh=date(1975, 2, 20), gioi_tinh="Nam", so_cccd="001075007890", nghe_nghiep="Tài xế")
-        nk2_mai = NhanKhau(ho_ten="Phạm Thị Mai", ngay_sinh=date(1977, 11, 12), gioi_tinh="Nữ", so_cccd="001177001122", nghe_nghiep="Nội trợ")
-        db.session.add_all([nk2_binh, nk2_mai])
-        db.session.commit()
-
-        hk2 = HoKhau(ma_so_ho_khau="HM-DK-002", chu_ho_id=nk2_binh.id, 
-                     so_nha="Số 15, ngõ 5", duong_pho="Phố Đại Từ", 
-                     phuong_xa="Đại Kim", quan_huyen="Hoàng Mai", 
-                     so_dien=200, so_nuoc=80)
-        db.session.add(hk2)
-        db.session.commit()
-
-        # Link HK2
-        nk2_binh.id_ho_khau = hk2.id
-        db.session.add(NhanKhauHoKhau(nhan_khau_id=nk2_binh.id, ho_khau_id=hk2.id, quan_he_chu_ho="Chủ hộ"))
-        db.session.add(TaiKhoan(username="001075007890", password_hash=generate_password_hash("1"), ho_ten=nk2_binh.ho_ten, role="resident", nhan_khau_id=nk2_binh.id))
-        
-        nk2_mai.id_ho_khau = hk2.id
-        db.session.add(NhanKhauHoKhau(nhan_khau_id=nk2_mai.id, ho_khau_id=hk2.id, quan_he_chu_ho="Vợ"))
-        db.session.add(TaiKhoan(username="001177001122", password_hash=generate_password_hash("1"), ho_ten=nk2_mai.ho_ten, role="resident", nhan_khau_id=nk2_mai.id))
-
-        # === HỘ 3: Độc thân Hoàng Trung Dũng ===
-        nk3_dung = NhanKhau(ho_ten="Hoàng Trung Dũng", ngay_sinh=date(1995, 9, 9), gioi_tinh="Nam", so_cccd="001095003344", nghe_nghiep="Lập trình viên")
-        db.session.add(nk3_dung)
-        db.session.commit()
-
-        hk3 = HoKhau(ma_so_ho_khau="HM-DK-003", chu_ho_id=nk3_dung.id, 
-                     so_nha="Số 20, ngách 15/7", duong_pho="Phố Đại Từ", 
-                     phuong_xa="Đại Kim", quan_huyen="Hoàng Mai", 
-                     so_dien=50, so_nuoc=10)
-        db.session.add(hk3)
-        db.session.commit()
-
-        # Link HK3
-        nk3_dung.id_ho_khau = hk3.id
-        db.session.add(NhanKhauHoKhau(nhan_khau_id=nk3_dung.id, ho_khau_id=hk3.id, quan_he_chu_ho="Chủ hộ"))
-        db.session.add(TaiKhoan(username="001095003344", password_hash=generate_password_hash("1"), ho_ten=nk3_dung.ho_ten, role="resident", nhan_khau_id=nk3_dung.id))
-
-        db.session.commit()
-        print("--- THÀNH CÔNG: Đã tạo 3 hộ khẩu chuẩn tại Đại Từ, Hoàng Mai ---")
-
+        print("--- THÀNH CÔNG: 100 hộ dân và 10 tạm trú đã được tạo ---")
 
     return app

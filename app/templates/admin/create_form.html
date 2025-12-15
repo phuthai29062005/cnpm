@@ -2,97 +2,60 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Quản lý Dân cư</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- CSS CHUẨN ĐỒNG BỘ VỚI DASHBOARD --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        :root { 
-            --primary: #3498db; --primary-light: #5dade2; --primary-dark: #2980b9;
-            --secondary: #2c3e50; --secondary-light: #34495e;
-            --success: #27ae60; --danger: #e74c3c;
-            --white: #ffffff; --sidebar-width: 260px;
-            --shadow-card: 0 5px 15px rgba(0,0,0,0.08);
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; min-height: 100vh; }
         
-        /* 1. SIDEBAR (Giữ nguyên để giống Dashboard) */
-        .sidebar { width: var(--sidebar-width); background: var(--secondary); color: white; height: 100vh; position: fixed; overflow-y: auto; z-index: 100; }
-        .logo { padding: 25px 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1); }
-        .logo h2 { font-weight: 600; font-size: 1.4rem; color: white; }
-        .menu { padding: 15px 0; }
-        .menu-item { padding: 14px 20px; display: flex; align-items: center; color: #ecf0f1; text-decoration: none; transition: 0.3s; margin: 5px 10px; border-radius: 8px; }
-        .menu-item:hover { background: var(--secondary-light); color: var(--white); transform: translateX(5px); }
-        .menu-item i { margin-right: 12px; width: 20px; text-align: center; }
+        .sidebar { width: 260px; background: #2c3e50; color: white; height: 100vh; position: fixed; }
+        .logo { padding: 25px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold; font-size: 1.4rem; background: rgba(0,0,0,0.1); }
+        .menu-item { padding: 15px 25px; display: block; color: #ecf0f1; text-decoration: none; border-left: 4px solid transparent; }
+        .menu-item:hover { background: rgba(255,255,255,0.05); border-left-color: #3498db; }
         
-        /* 2. MAIN CONTENT */
-        .main-content { flex: 1; margin-left: var(--sidebar-width); padding: 25px; }
+        .main-content { flex: 1; margin-left: 260px; padding: 30px; }
         
-        /* Header của Form */
         .header-form { 
-            background: var(--white); padding: 20px 30px; border-radius: 12px; 
-            box-shadow: var(--shadow-card); margin-bottom: 25px; display: flex; 
-            justify-content: space-between; align-items: center;
+            background: white; padding: 20px 30px; border-radius: 12px; margin-bottom: 25px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
         }
-        .header-form h2 { color: var(--secondary); margin: 0; font-size: 1.6rem; }
-        
-        /* Form Container */
-        .form-container {
-            background: var(--white); border-radius: 12px; padding: 30px;
-            box-shadow: var(--shadow-card);
+        .form-container { 
+            background: white; border-radius: 12px; padding: 40px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
         }
         
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Chia 2 cột */
-            gap: 20px;
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 10px; font-weight: 600; color: #34495e; }
+        
+        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+            width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: 0.3s;
         }
+        input:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
         
-        .form-group { margin-bottom: 15px; }
-        .full-width { grid-column: 1 / -1; } /* Ô nào dài thì chiếm hết dòng */
+        /* [FIX QUAN TRỌNG] Sửa lỗi Radio Button */
+        ul { list-style-type: none; padding: 0; margin: 0; display: flex; gap: 20px; }
+        ul li { display: flex; align-items: center; }
+        input[type="radio"] { width: auto; margin-right: 8px; transform: scale(1.2); cursor: pointer; }
         
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--secondary); }
-        
-        input, select, textarea {
-            width: 100%; padding: 12px 15px; border: 1px solid #ddd;
-            border-radius: 8px; font-size: 1rem; transition: 0.3s;
-        }
-        
-        input:focus, select:focus { border-color: var(--primary); outline: none; }
-        
-        /* Nút bấm */
-        .btn-group { margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 20px; }
-        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary { background: var(--primary); }
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #3498db, #2980b9); }
         .btn-secondary { background: #95a5a6; }
         
-        /* Thông báo lỗi */
-        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 5px; display: block; }
-        .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; color: white; background: var(--danger); }
-        .alert-success { background: var(--success); }
-
-        @media (max-width: 992px) {
-            .sidebar { display: none; } /* Ẩn menu trên mobile */
-            .main-content { margin-left: 0; }
-        }
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; color: white; background: #e74c3c; display: flex; align-items: center; gap: 10px; }
+        .alert-success { background: #27ae60; }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
-        <div class="logo"><h2>Quản lý Dân cư</h2></div>
-        <div class="menu">
-            <a class="menu-item" href="{{ url_for('admin.index') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
-            <a class="menu-item" href="{{ url_for('admin.index', tab='population') }}"><i class="fas fa-user-friends"></i><span>Nhân khẩu</span></a>
-            <a class="menu-item" href="{{ url_for('admin.index', tab='household') }}"><i class="fas fa-house-user"></i><span>Hộ khẩu</span></a>
+        <div class="logo"><i class="fas fa-city me-2"></i>QUẢN LÝ DÂN CƯ</div>
+        <div class="menu" style="padding-top:20px;">
+            <a class="menu-item" href="{{ url_for('admin.index') }}"><i class="fas fa-arrow-left me-2"></i> Quay lại Dashboard</a>
         </div>
     </div>
 
     <div class="main-content">
-        
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -104,44 +67,34 @@
         {% endwith %}
 
         <div class="header-form">
-            <h2>{{ title }}</h2>
-            <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại
-            </a>
+            <h2 style="color:#2c3e50; margin:0;">{{ title }}</h2>
         </div>
 
         <div class="form-container">
-            <form method="POST" action="">
+            <form method="POST">
                 {{ form.hidden_tag() }}
                 
-                <div class="form-grid">
-                    {% for field in form %}
-                        {% if field.name not in ['csrf_token', 'submit'] %}
-                            <div class="form-group {% if field.type == 'TextAreaField' or 'địa chỉ' in field.label.text|lower or 'nơi' in field.label.text|lower %}full-width{% endif %}">
-                                {{ field.label }}
-                                
-                                {% if field.errors %}
-                                    {{ field(class="is-invalid", style="border-color: red;") }}
-                                    {% for error in field.errors %}
-                                        <span class="error-msg"><i class="fas fa-exclamation-triangle"></i> {{ error }}</span>
-                                    {% endfor %}
-                                {% else %}
-                                    {{ field() }}
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                {% for field in form %}
+                    {% if field.name not in ['csrf_token', 'submit'] %}
+                        <div class="form-group">
+                            {{ field.label }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div style="color:#e74c3c; font-size:0.9rem; margin-top:5px;">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {% for error in field.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
 
-                <div class="btn-group">
+                <div style="margin-top:40px; text-align:right; border-top: 1px solid #eee; padding-top: 20px;">
                     <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">Hủy bỏ</a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Lưu dữ liệu
-                    </button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu dữ liệu</button>
                 </div>
             </form>
         </div>
     </div>
-
 </body>
 </html>

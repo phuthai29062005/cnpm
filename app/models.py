@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, text
 
 db = SQLAlchemy()
 
@@ -18,14 +18,25 @@ class NhanKhau(db.Model):
     dan_toc = db.Column(db.Unicode(50))
     nghe_nghiep = db.Column(db.Unicode(100))
     noi_lam_viec = db.Column(db.Unicode(100))
-    so_cccd = db.Column(db.String(12), unique=True, nullable=True) 
+    
+    # Bỏ unique=True mặc định để tránh lỗi khi có nhiều người chưa có CCCD (NULL)
+    so_cccd = db.Column(db.String(12), nullable=True) 
+    
     ngay_cap = db.Column(db.Date)
     noi_cap = db.Column(db.Unicode(100))
-    id_ho_khau = db.Column(db.Integer, db.ForeignKey("Ho_khau.id"))
+    
+    # [FIX] Thêm use_alter=True để giải quyết vấn đề khóa ngoại vòng lặp
+    id_ho_khau = db.Column(db.Integer, db.ForeignKey("Ho_khau.id", use_alter=True))
+    
     ngay_dang_ky_thuong_tru = db.Column(db.Date)
     noi_thuong_tru = db.Column(db.Unicode(255), default="Mới sinh")
     tinh_trang = db.Column(db.Unicode(20), default="Bình thường") 
     ngay_cap_nhat = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # [FIX] Chỉ yêu cầu CCCD duy nhất khi nó không phải NULL
+    __table_args__ = (
+        db.Index('idx_so_cccd_unique', 'so_cccd', unique=True, mssql_where=text('so_cccd IS NOT NULL')),
+    )
 
     ho_khau = db.relationship("HoKhau", back_populates="thanh_vien", foreign_keys=[id_ho_khau])
     ho_khau_lam_chu = db.relationship("HoKhau", back_populates="chu_ho", foreign_keys="HoKhau.chu_ho_id")
@@ -38,7 +49,10 @@ class HoKhau(db.Model):
     __tablename__ = "Ho_khau"
     id = db.Column(db.Integer, primary_key=True)
     ma_so_ho_khau = db.Column(db.String(50), unique=True, nullable=False) 
-    chu_ho_id = db.Column(db.Integer, db.ForeignKey("Nhan_khau.id"))
+    
+    # [FIX] Thêm use_alter=True
+    chu_ho_id = db.Column(db.Integer, db.ForeignKey("Nhan_khau.id", use_alter=True))
+    
     so_nha = db.Column(db.Unicode(50), nullable=False) 
     duong_pho = db.Column(db.Unicode(100), nullable=False)
     phuong_xa = db.Column(db.Unicode(100), nullable=False)

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Chỉ số Điện Nước</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #f4f6f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
+        .card { width: 100%; max-width: 500px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; }
+        .card-header { background: #3498db; color: white; border-radius: 15px 15px 0 0 !important; padding: 20px; text-align: center; }
+        .btn-upload { background: #2ecc71; color: white; border: none; padding: 10px 20px; width: 100%; border-radius: 8px; font-weight: bold; }
+        .btn-upload:hover { background: #27ae60; }
+        .sample-text { font-size: 0.9rem; color: #666; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-file-excel me-2"></i>Nhập Điện Nước từ Excel</h4>
+        </div>
+        <div class="card-body p-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Chọn file Excel (.xlsx)</label>
+                    <input type="file" class="form-control" name="file" accept=".xlsx, .xls" required>
+                </div>
+                
+                <button type="submit" class="btn btn-upload">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Tải lên và Tính tiền
+                </button>
+            </form>
+
+            <div class="sample-text">
+                <strong>Yêu cầu cấu trúc file Excel:</strong><br>
+                <ul>
+                    <li>Cột 1: <code>ma_ho_khau</code> (Ví dụ: HK-DK-001)</li>
+                    <li>Cột 2: <code>chi_so_dien_moi</code> (Số trên đồng hồ)</li>
+                    <li>Cột 3: <code>chi_so_nuoc_moi</code> (Số trên đồng hồ)</li>
+                </ul>
+                <small class="text-danger">* Hệ thống sẽ tự tính thêm Phí Vệ Sinh (60k/người).</small>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('admin.index') }}" class="text-decoration-none text-secondary">Quay lại Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
