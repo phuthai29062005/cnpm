@@ -45,7 +45,9 @@ class NhanKhauForm(FlaskForm):
 # --- FORM HỘ KHẨU ---
 class HoKhauForm(FlaskForm):
     ma_so_ho_khau = StringField('Mã Hộ khẩu', validators=[DataRequired()])
-    chu_ho = QuerySelectField('Chủ hộ', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=True, get_pk=lambda x: x.id)
+    chu_ho = QuerySelectField('Chủ hộ', query_factory=nhan_khau_choices, 
+                              get_label=lambda x: f"{x.ho_ten} - CCCD: {x.so_cccd if x.so_cccd else 'N/A'}", 
+                              allow_blank=True)
     so_nha = StringField('Số nhà', validators=[DataRequired()])
     duong_pho = StringField('Đường/Phố', validators=[DataRequired()])
     phuong_xa = StringField('Phường/Xã', default='Đại Kim')
@@ -54,13 +56,20 @@ class HoKhauForm(FlaskForm):
     submit = SubmitField('Lưu')
 
 class NhanKhauHoKhauForm(FlaskForm):
-    nhan_khau = QuerySelectField('Nhân khẩu', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
-    ho_khau = QuerySelectField('Hộ khẩu', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=False)
+# Áp dụng tương tự cho việc thêm thành viên vào hộ
+    nhan_khau = QuerySelectField('Nhân khẩu', query_factory=nhan_khau_choices, 
+                                 get_label=lambda x: f"{x.ho_ten} - CCCD: {x.so_cccd if x.so_cccd else 'N/A'}")
+    ho_khau = QuerySelectField('Hộ khẩu', query_factory=ho_khau_choices, get_label='ma_so_ho_khau')
     quan_he_chu_ho = StringField('Quan hệ với chủ hộ', validators=[DataRequired()])
     submit = SubmitField('Thêm vào Hộ')
 
 class TachKhauForm(FlaskForm):
-    nhan_khau = QuerySelectField('Người tách', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
+    nhan_khau = QuerySelectField(
+        'Người tách', 
+        query_factory=nhan_khau_choices, 
+        get_label=lambda x: f"{x.ho_ten} - CCCD: {x.so_cccd if x.so_cccd else 'N/A'}", 
+        allow_blank=False
+    )
     loai_tach = SelectField('Hình thức', choices=[('new', 'Lập hộ mới'), ('existing', 'Chuyển sang Hộ khác')], default='new')
     ho_khau_dich = QuerySelectField('Hộ đích (Nếu chuyển)', query_factory=ho_khau_choices, get_label='ma_so_ho_khau', allow_blank=True)
     quan_he_moi = StringField('Quan hệ với chủ hộ mới')
@@ -78,7 +87,8 @@ class KhaiSinhForm(FlaskForm):
     submit = SubmitField('Khai Sinh')
 
 class KhaiTuForm(FlaskForm):
-    nhan_khau = QuerySelectField('Người mất', query_factory=nhan_khau_choices, get_label='ho_ten', allow_blank=False)
+    nhan_khau = QuerySelectField('Người mất', query_factory=nhan_khau_choices, 
+                                 get_label=lambda x: f"{x.ho_ten} - CCCD: {x.so_cccd if x.so_cccd else 'N/A'}")
     ngay_mat = DateField('Ngày mất', validators=[DataRequired()], default=date.today)
     ly_do = TextAreaField('Lý do mất', validators=[DataRequired()])
     submit = SubmitField('Xác nhận Khai Tử')
@@ -103,15 +113,27 @@ class LoaiPhiForm(FlaskForm):
     submit = SubmitField('Cập nhật')
 
 class GiaoDichForm(FlaskForm):
-    nhan_khau = QuerySelectField('Người nộp', query_factory=nhan_khau_choices, get_label='ho_ten')
-    ho_khau = QuerySelectField('Hộ', query_factory=ho_khau_choices, get_label='ma_so_ho_khau')
+    nhan_khau = QuerySelectField(
+        'Người nộp', 
+        query_factory=nhan_khau_choices, 
+        get_label=lambda x: f"{x.ho_ten} - CCCD: {x.so_cccd if x.so_cccd else 'N/A'}"
+    )
+    ho_khau = QuerySelectField(
+        'Hộ khẩu', 
+        query_factory=ho_khau_choices, 
+        get_label=lambda x: f"{x.ma_so_ho_khau} - Địa chỉ: {x.so_nha} {x.duong_pho}"
+    )
     loai_phi = QuerySelectField('Loại phí', query_factory=loai_phi_choices, get_label='ten_phi')
     so_tien = DecimalField('Tiền')
     phuong_thuc = SelectField('Cách nộp', choices=[('Tiền mặt', 'Tiền mặt'), ('Chuyển khoản', 'CK')])
     submit = SubmitField('Lưu')
 
 class TamTruForm(FlaskForm):
-    resident = QuerySelectField('Người ĐK', query_factory=nhan_khau_choices, get_label='ho_ten')
+    resident = QuerySelectField(
+        'Người ĐK', 
+        query_factory=nhan_khau_choices, 
+        get_label=lambda x: f"{x.ho_ten} - CCCD: {x.so_cccd if x.so_cccd else 'N/A'}"
+    )
     noi_tam_tru = StringField('Nơi tạm trú', validators=[DataRequired()])
     ngay_bat_dau = DateField('Từ ngày', validators=[DataRequired()])
     ngay_ket_thuc = DateField('Đến ngày', validators=[DataRequired()])

@@ -34,8 +34,20 @@
         input:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
         
         /* [FIX QUAN TRỌNG] Sửa lỗi Radio Button */
-        ul { list-style-type: none; padding: 0; margin: 0; display: flex; gap: 20px; }
-        ul li { display: flex; align-items: center; }
+        ul { 
+        list-style-type: none; 
+        padding: 0; 
+        margin: 0; 
+        display: flex; 
+        flex-direction: column; /* Ép xuống dòng */
+        gap: 10px; 
+        }
+        ul li { 
+            display: flex; 
+            align-items: center; 
+            width: 100%; /* Chiếm toàn bộ chiều rộng dòng đó */
+            padding: 5px 0;
+        }
         input[type="radio"] { width: auto; margin-right: 8px; transform: scale(1.2); cursor: pointer; }
         
         .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
@@ -45,6 +57,17 @@
         
         .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; color: white; background: #e74c3c; display: flex; align-items: center; gap: 10px; }
         .alert-success { background: #27ae60; }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Tùy chỉnh để thanh tìm kiếm trông đẹp hơn và khớp với giao diện của bạn */
+        .select2-container--default .select2-selection--single {
+            height: 45px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 8px !important;
+            padding: 8px !important;
+        }
+        .select2-container { width: 100% !important; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -96,5 +119,104 @@
             </form>
         </div>
     </div>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        /* Làm cho ô chọn to và dễ nhìn hơn */
+        .select2-container--default .select2-selection--single {
+            height: 50px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 8px !important;
+            padding: 10px !important;
+        }
+        .select2-container { width: 100% !important; }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            // Kích hoạt ô tìm kiếm cho tất cả các dropdown
+            $('select').select2({
+                placeholder: "Nhập Tên hoặc CCCD để tìm nhanh...",
+                allowClear: true,
+                language: {
+                    noResults: function() { return "Không tìm thấy người này..."; }
+                }
+            });
+        });
+    </script>
+    <style>
+    /* Giới hạn chiều cao của danh sách kết quả để có thể "lướt xuống" */
+    .select2-results__options {
+        max-height: 300px !important; /* Chiều cao tối đa 300px, quá mức này sẽ hiện thanh cuộn */
+        overflow-y: auto !important;
+    }
+
+    /* Làm cho ô tìm kiếm nổi bật hơn */
+    .select2-search__field {
+        padding: 10px !important;
+        border-radius: 5px !important;
+    }
+
+    /* Hiển thị rõ ràng từng dòng kết quả */
+    .select2-results__option {
+        padding: 12px 15px !important;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .select2-results__option--highlighted {
+        background-color: #3498db !important;
+    }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            $('select').select2({
+                placeholder: "Gõ Mã hộ, Số nhà hoặc Tên người để tìm...",
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('.form-container'), // Đảm bảo danh sách không bị che khuất
+                language: {
+                    noResults: function() { return "Không tìm thấy dữ liệu..."; }
+                }
+            });
+        });
+    </script>
+
+    <style>
+    /* Ép danh sách hiển thị theo hàng dọc */
+    .select2-results__options {
+        max-height: 250px !important; /* Chiều cao tối đa để lướt xuống */
+        overflow-y: auto !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .select2-results__option {
+        padding: 10px 15px !important;
+        border-bottom: 1px solid #f0f0f0; /* Đường kẻ ngang giữa các dòng */
+    }
+
+    /* Đảm bảo ô tìm kiếm chiếm hết chiều rộng dòng */
+    .select2-container { width: 100% !important; margin-top: 5px; }
+    .select2-selection--single { height: 45px !important; border-radius: 8px !important; padding: 8px !important; }
+    </style>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('select').select2({
+                placeholder: "Gõ Tên, CCCD hoặc Địa chỉ để tìm nhanh...",
+                allowClear: true,
+                language: {
+                    noResults: function() { return "Không tìm thấy dữ liệu..."; }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

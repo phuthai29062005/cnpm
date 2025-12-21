@@ -74,7 +74,7 @@
     <div class="sidebar">
         <div class="logo"><i class="fas fa-city me-2"></i>QUẢN LÝ DÂN CƯ</div>
         <div class="menu">
-            <a class="menu-item active" data-page="dashboard"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a class="menu-item active" data-page="dashboard"><i class="fas fa-th-large"></i> Trang chủ</a>
             <a class="menu-item" data-page="population"><i class="fas fa-users"></i> Nhân khẩu</a>
             <a class="menu-item" data-page="household"><i class="fas fa-house-user"></i> Hộ khẩu</a>
             <a class="menu-item" data-page="transactions"><i class="fas fa-file-invoice-dollar"></i> Giao dịch</a>
@@ -86,7 +86,7 @@
 
     <div class="main-content">
         <div class="header">
-            <h2 id="page-title" style="margin:0; color:var(--secondary);">Dashboard Tổng quan</h2>
+            <h2 id="page-title" style="margin:0; color:var(--secondary);">Tổng quan</h2>
             <div class="user-info">
                 <strong>{{ current_user.ho_ten }}</strong>
                 <div class="user-avatar">{{ current_user.ho_ten[0] }}</div>
@@ -107,7 +107,7 @@
         {% endwith %}
         <div id="dashboard" class="page-content active">
             <div class="table-header">
-                <h2 class="table-title">Chức năng Nhanh</h2>
+                <h2 class="table-title">Thống kê</h2>
                 <div>
                     <a href="{{ url_for('crud.add_thongbao') }}" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Gửi Thông báo</a>
                     <a href="{{ url_for('crud.upload_billing') }}" class="btn btn-success" style="margin-left: 10px;">
@@ -124,7 +124,7 @@
             </div>
 
             <div class="table-header" style="margin-top: 40px;">
-                <h2 class="table-title">Thống kê Nhân khẩu học</h2>
+                <h2 class="table-title">Thống kê Nhân khẩu </h2>
             </div>
             <div class="stats-cards">
                 <div class="stat-card" style="border-color:#9b59b6">

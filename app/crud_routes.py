@@ -105,6 +105,8 @@ def khaisinh():
             flash(str(e), 'danger')
     return render_template('admin/create_form.html', form=form, title='Khai Sinh')
 
+# app/crud_routes.py
+
 @crud.route('/nhankhau/khaitu', methods=['GET', 'POST'])
 def khaitu():
     form = KhaiTuForm()
@@ -112,23 +114,37 @@ def khaitu():
         try:
             nk = form.nhan_khau.data
             hk_id = nk.id_ho_khau
-            nk.tinh_trang = 'Qua đời'
-            nk.ghi_chu = f"Mất ngày {form.ngay_mat.data}. Lý do: {form.ly_do.data}"
-            nk.id_ho_khau = None
-            NhanKhauHoKhau.query.filter_by(nhan_khau_id=nk.id).delete()
+            
+            # 1. Kiểm tra nếu người mất là Chủ hộ
             hk_lam_chu = HoKhau.query.filter_by(chu_ho_id=nk.id).first()
             if hk_lam_chu:
+                # Gỡ vai trò chủ hộ trong bảng Ho_khau
                 hk_lam_chu.chu_ho_id = None
-                flash(f'Cảnh báo: Hộ {hk_lam_chu.ma_so_ho_khau} hiện đang mất chủ hộ!', 'warning')
-            if hk_id:
-                db.session.add(LichSuHoKhau(ho_khau_id=hk_id, noi_dung=f"Thành viên {nk.ho_ten} qua đời."))
+                db.session.add(LichSuHoKhau(
+                    ho_khau_id=hk_lam_chu.id, 
+                    noi_dung=f"CẢNH BÁO: Chủ hộ {nk.ho_ten} đã qua đời. Hộ khẩu cần bầu chủ hộ mới."
+                ))
+                flash(f'Lưu ý: Hộ {hk_lam_chu.ma_so_ho_khau} hiện đang trống chủ hộ!', 'warning')
+
+            # 2. Xử lý các bảng liên quan
+            # Xóa link trong bảng trung gian nhan_khau_ho_khau
+            NhanKhauHoKhau.query.filter_by(nhan_khau_id=nk.id).delete()
+            # Xóa tài khoản đăng nhập của người này
             TaiKhoan.query.filter_by(nhan_khau_id=nk.id).delete()
+
+            # 3. Cập nhật trạng thái Nhân khẩu
+            nk.tinh_trang = 'Qua đời'
+            nk.id_ho_khau = None # Rời khỏi hộ khẩu hiện tại
+            nk.ghi_chu = f"Mất ngày {form.ngay_mat.data}. Lý do: {form.ly_do.data}"
+
             db.session.commit()
-            flash(f'Đã khai tử cho {nk.ho_ten}', 'success')
-            return redirect(request.url)
+            flash(f'Đã hoàn tất thủ tục khai tử cho {nk.ho_ten}', 'success')
+            return redirect(url_for('admin.index'))
+            
         except Exception as e:
             db.session.rollback()
-            flash(str(e), 'danger')
+            flash(f'Lỗi hệ thống: {str(e)}', 'danger')
+            
     return render_template('admin/create_form.html', form=form, title='Khai Tử')
 
 @crud.route('/hokhau/add', methods=['GET', 'POST'])
