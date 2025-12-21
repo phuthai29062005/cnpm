@@ -453,22 +453,31 @@
             {% endif %}
         {% endwith %}
         <div class="filter-section">
-            <span class="filter-label">Lọc theo trạng thái:</span>
-            <select class="filter-select" id="statusFilter">
-                <option value="all">Tất cả trạng thái</option>
-                <option value="pending">Chờ xử lý</option>
-                <option value="done">Đã xử lý</option>
-                <option value="reject">Đã hủy</option>
-            </select>
+            <div style="flex: 1; min-width: 200px;">
+                <span class="filter-label"><i class="fas fa-search"></i> Tìm kiếm:</span>
+                <input type="text" id="searchInput" class="filter-select" placeholder="Nhập tên người gửi hoặc nội dung..." style="width: 100%;">
+            </div>
+
+            <div>
+                <span class="filter-label">Trạng thái:</span>
+                <select class="filter-select" id="statusFilter">
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="pending">Chờ xử lý</option>
+                    <option value="done">Đã xử lý</option>
+                    <option value="reject">Đã hủy</option>
+                </select>
+            </div>
             
-            <span class="filter-label">Lọc theo loại:</span>
-            <select class="filter-select" id="typeFilter">
-                <option value="all">Tất cả loại</option>
-                <option value="sửa chữa">Sửa chữa</option>
-                <option value="khiếu nại">Khiếu nại</option>
-                <option value="đề xuất">Đề xuất</option>
-                <option value="khác">Khác</option>
-            </select>
+            <div>
+                <span class="filter-label">Loại:</span>
+                <select class="filter-select" id="typeFilter">
+                    <option value="all">Tất cả loại</option>
+                    <option value="sửa chữa">Sửa chữa</option>
+                    <option value="khiếu nại">Khiếu nại</option>
+                    <option value="đề xuất">Đề xuất</option>
+                    <option value="khác">Khác</option>
+                </select>
+            </div>
         </div>
         
         <div class="table-container">
@@ -582,20 +591,27 @@
         });
 
         // Filter functionality
+        document.getElementById('searchInput').addEventListener('keyup', filterTable);
         document.getElementById('statusFilter').addEventListener('change', filterTable);
         document.getElementById('typeFilter').addEventListener('change', filterTable);
 
         function filterTable() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase(); // Lấy từ khóa tìm kiếm
             const statusFilter = document.getElementById('statusFilter').value;
             const typeFilter = document.getElementById('typeFilter').value;
             const rows = document.querySelectorAll('tbody tr');
             
             rows.forEach(row => {
-                if (row.classList.contains('empty-state-row')) return;
+                if (row.classList.contains('empty-state-row') || row.querySelector('.empty-state')) return;
                 
+                // Lấy dữ liệu các cột
+                const senderName = row.querySelector('td:nth-child(2)').textContent.toLowerCase(); // Cột Người gửi
+                const content = row.querySelector('td:nth-child(4)').textContent.toLowerCase();    // Cột Nội dung
                 const status = row.querySelector('.status-badge').textContent.trim();
                 const type = row.querySelector('td:nth-child(3)').textContent.trim();
                 
+                // Logic kiểm tra
+                let textMatch = senderName.includes(searchText) || content.includes(searchText);
                 let statusMatch = true;
                 let typeMatch = true;
                 
@@ -611,8 +627,8 @@
                     typeMatch = type.toLowerCase().includes(typeFilter.toLowerCase());
                 }
                 
-                // Show/hide row based on filters
-                if (statusMatch && typeMatch) {
+                // Hiển thị nếu thỏa mãn TẤT CẢ điều kiện
+                if (textMatch && statusMatch && typeMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -633,6 +649,34 @@
                 }, 2000);
             });
         });
+
+    const searchInput = document.getElementById('feeSearchInput');
+    searchInput.addEventListener('focus', function() {
+        this.style.borderColor = 'var(--primary)';
+        this.style.boxShadow = '0 0 0 3px rgba(52, 152, 219, 0.2)';
+    });
+    searchInput.addEventListener('blur', function() {
+        this.style.borderColor = '#ddd';
+        this.style.boxShadow = 'none';
+    });
+
+    // Logic tìm kiếm
+    searchInput.addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            // Bỏ qua dòng thông báo trống nếu có
+            if (row.querySelector('.empty-state')) return;
+
+            const feeName = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+            if (feeName.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
     </script>
 </body>
 </html>
