@@ -67,6 +67,7 @@ class Config:
 
 
 Bước 4: Khởi tạo Bảng và Nạp Dữ liệu (CLEAN INSTALL)
+Chạy lệnh python reset_db_tool.py
 
 Đây là bước quan trọng nhất để khởi chạy ứng dụng sạch. Hãy chạy 3 lệnh này theo đúng thứ tự trong Terminal:
 
@@ -109,14 +110,3 @@ Username: admin
 
 Password: 123456
 
-Cư dân (Mật khẩu: 1)
-
-Hộ 1: 001080001234 (Nguyễn Văn Hùng)
-
-Hộ 1: 001182004567 (Trần Thị Lan)
-
-Hộ 2: 001075007890 (Lê Minh Bình)
-
-Hộ 2: 001177001122 (Phạm Thị Mai)
-
-Hộ 3: 001095003344 (Hoàng Trung Dũng)

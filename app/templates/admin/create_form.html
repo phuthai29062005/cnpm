@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>{{ title }} - Quản lý Dân cư</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; min-height: 100vh; }
@@ -33,10 +36,38 @@
         }
         input:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
         
-        /* [FIX QUAN TRỌNG] Sửa lỗi Radio Button */
-        ul { list-style-type: none; padding: 0; margin: 0; display: flex; gap: 20px; }
+        /* [FIX QUAN TRỌNG] Hiển thị Radio Button và Danh sách theo HÀNG DỌC */
+        ul { 
+            list-style-type: none; 
+            padding: 0; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; /* Ép xuống dòng */
+            gap: 12px; 
+        }
         ul li { display: flex; align-items: center; }
-        input[type="radio"] { width: auto; margin-right: 8px; transform: scale(1.2); cursor: pointer; }
+        input[type="radio"] { width: auto; margin-right: 10px; transform: scale(1.2); cursor: pointer; }
+        
+        /* [FIX QUAN TRỌNG] Tùy chỉnh thanh tìm kiếm Select2 */
+        .select2-container { width: 100% !important; display: block; margin-top: 5px; }
+        .select2-container--default .select2-selection--single {
+            height: 50px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 8px !important;
+            padding: 10px !important;
+            font-size: 1rem;
+        }
+        .select2-selection__arrow { top: 12px !important; right: 10px !important; }
+        
+        /* [FIX QUAN TRỌNG] Danh sách kết quả tìm kiếm hiển thị DỌC và có THANH CUỘN */
+        .select2-results__options {
+            max-height: 250px !important; /* Chiều cao tối đa, quá sẽ cuộn */
+            overflow-y: auto !important;
+        }
+        .select2-results__option {
+            padding: 12px 15px !important;
+            border-bottom: 1px solid #f1f1f1; /* Đường kẻ phân cách */
+        }
         
         .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
@@ -96,5 +127,22 @@
             </form>
         </div>
     </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Tự động biến tất cả thẻ select thành ô tìm kiếm thông minh
+            $('select').select2({
+                placeholder: "Gõ Tên, CCCD, Mã hộ hoặc Địa chỉ để tìm...",
+                allowClear: true,
+                width: '100%',
+                minimumResultsForSearch: 0,
+                language: {
+                    noResults: function() { return "Không tìm thấy dữ liệu phù hợp..."; }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

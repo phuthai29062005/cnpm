@@ -5,14 +5,14 @@
     <title>Quản lý Dân cư</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- CSS XỊN SÒ (GỐC) --- */
+        /* --- CSS GIỮ NGUYÊN & CẢI TIẾN --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         :root { --primary: #3498db; --secondary: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; --white: #ffffff; --sidebar-width: 260px; }
         body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; min-height: 100vh; }
         
         .sidebar { width: var(--sidebar-width); background: var(--secondary); color: white; height: 100vh; position: fixed; overflow-y: auto; z-index: 100; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         .logo { padding: 25px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.4rem; font-weight: bold; background: rgba(0,0,0,0.1); }
-        .menu-item { padding: 15px 25px; display: flex; align-items: center; color: #ecf0f1; text-decoration: none; transition: 0.3s; border-left: 4px solid transparent; }
+        .menu-item { padding: 15px 25px; display: flex; align-items: center; color: #ecf0f1; text-decoration: none; transition: 0.3s; border-left: 4px solid transparent; cursor: pointer; }
         .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.05); color: var(--primary); border-left-color: var(--primary); }
         .menu-item i { margin-right: 15px; width: 25px; text-align: center; font-size: 1.1rem; }
         
@@ -22,8 +22,7 @@
         .user-info { display: flex; align-items: center; gap: 15px; }
         .user-avatar { width: 40px; height: 40px; background: var(--success); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         
-        /* [FIX] Tiêu đề có gạch chân vừa khít */
-        .table-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
         .table-title { 
             font-size: 1.5rem; color: var(--secondary); font-weight: 700; 
             position: relative; display: inline-block; padding-bottom: 10px; margin: 0;
@@ -33,11 +32,27 @@
             background: var(--primary); border-radius: 2px; 
         }
         
+        /* SEARCH BAR RIÊNG BIỆT */
+        .search-box {
+            position: relative;
+            min-width: 300px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .search-box input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #95a5a6; }
+
         .stats-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; margin-bottom: 40px; }
         .stat-card { 
             background: white; border-radius: 15px; padding: 25px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; 
-            transition: 0.3s; border-top: 5px solid var(--primary); position: relative; overflow: hidden;
+            transition: 0.3s; border-top: 5px solid var(--primary);
         }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
         .stat-number { font-size: 2.5rem; font-weight: 800; color: var(--secondary); margin: 10px 0; }
@@ -50,10 +65,14 @@
         .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
         .btn-warning { background: linear-gradient(135deg, #f1c40f, #f39c12); }
 
-        .table-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .table-container { 
+            background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            /* Hỗ trợ cuộn cho danh sách dài như Giao dịch */
+            max-height: 600px; overflow-y: auto; 
+        }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 18px 25px; text-align: left; border-bottom: 1px solid #f1f1f1; }
-        th { background: #f8f9fa; color: var(--secondary); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; }
+        th { background: #f8f9fa; color: var(--secondary); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; position: sticky; top: 0; z-index: 10; }
         tr:hover { background: #fbfbfb; }
         
         .page-content { display: none; animation: fadeIn 0.4s ease-out; }
@@ -93,6 +112,7 @@
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-danger" style="padding: 8px 12px;"><i class="fas fa-sign-out-alt"></i></a>
             </div>
         </div>
+        
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div style="padding: 20px 0;">
@@ -105,6 +125,7 @@
                 </div>
             {% endif %}
         {% endwith %}
+
         <div id="dashboard" class="page-content active">
             <div class="table-header">
                 <h2 class="table-title">Chức năng Nhanh</h2>
@@ -122,7 +143,7 @@
                 <div class="stat-card" style="border-color:#e74c3c"><div class="stat-number text-danger">{{ pending_bills }}</div><div class="stat-label">Hóa đơn chờ</div></div>
                 <div class="stat-card" style="border-color:#27ae60"><div class="stat-number text-success">{{ total_doanhthu }}</div><div class="stat-label">Đã thu (VNĐ)</div></div>
             </div>
-
+            
             <div class="table-header" style="margin-top: 40px;">
                 <h2 class="table-title">Thống kê Nhân khẩu học</h2>
             </div>
@@ -140,20 +161,20 @@
         <div id="population" class="page-content">
             <div class="table-header">
                 <h2 class="table-title">Quản lý Nhân khẩu</h2>
-                <div>
+                <div style="display:flex; gap:10px;">
                     <a href="{{ url_for('crud.khaisinh') }}" class="btn btn-success"><i class="fas fa-baby"></i> Khai sinh</a>
                     <a href="{{ url_for('crud.khaitu') }}" class="btn btn-danger"><i class="fas fa-cross"></i> Khai tử</a>
                     <a href="{{ url_for('crud.add_nhankhau') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm mới</a>
                 </div>
             </div>
+            <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <form method="GET" action="{{ url_for('admin.index') }}" style="display:flex; gap:10px;">
+                    <input type="search" name="q" placeholder="Tìm kiếm Nhân khẩu (Tên, CCCD)..." value="{{ search_query }}" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="hidden" name="tab" value="population">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
+                </form>
+            </div>
             <div class="table-container">
-                <div style="padding: 20px; border-bottom: 1px solid #eee; background: #fafafa;">
-                    <form method="GET" action="{{ url_for('admin.index') }}" style="display:flex; gap:10px;">
-                        <input type="search" name="q" placeholder="Tìm kiếm theo Tên hoặc CCCD..." value="{{ search_query }}" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        <input type="hidden" name="tab" value="population">
-                        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-                    </form>
-                </div>
                 <table>
                     <thead><tr><th>Họ tên</th><th>Ngày sinh</th><th>Giới tính</th><th>CCCD</th><th>Tình trạng</th><th>Thao tác</th></tr></thead>
                     <tbody>
@@ -178,13 +199,17 @@
         <div id="household" class="page-content">
             <div class="table-header">
                 <h2 class="table-title">Quản lý Hộ khẩu</h2>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchHousehold" onkeyup="filterTable('searchHousehold', 'tableHousehold')" placeholder="Tìm Mã hộ, Chủ hộ...">
+                </div>
                 <div>
                     <a href="{{ url_for('crud.split_household') }}" class="btn btn-warning"><i class="fas fa-cut"></i> Tách khẩu</a>
                     <a href="{{ url_for('crud.add_hokhau') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm Hộ</a>
                 </div>
             </div>
             <div class="table-container">
-                <table>
+                <table id="tableHousehold">
                     <thead><tr><th>Mã HK</th><th>Chủ hộ</th><th>Địa chỉ</th><th>Số TV</th><th>Thao tác</th></tr></thead>
                     <tbody>
                         {% for hk in all_hokhau %}
@@ -241,9 +266,16 @@
         {% endfor %}
 
         <div id="temporary" class="page-content">
-            <div class="table-header"><h2 class="table-title">Quản lý Tạm trú</h2><a href="{{ url_for('crud.add_tamtru') }}" class="btn btn-primary">Đăng ký</a></div>
+            <div class="table-header">
+                <h2 class="table-title">Quản lý Tạm trú</h2>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchTemp" onkeyup="filterTable('searchTemp', 'tableTemp')" placeholder="Tìm người, địa chỉ...">
+                </div>
+                <a href="{{ url_for('crud.add_tamtru') }}" class="btn btn-primary">Đăng ký</a>
+            </div>
             <div class="table-container">
-                <table>
+                <table id="tableTemp">
                     <thead><tr><th>Họ tên</th><th>CCCD</th><th>Địa chỉ tạm trú</th><th>Hạn tạm trú</th><th>Thao tác</th></tr></thead>
                     <tbody>
                         {% for tt in all_tamtru %}
@@ -261,9 +293,15 @@
         </div>
 
         <div id="transactions" class="page-content">
-             <div class="table-header"><h2 class="table-title">Giao dịch</h2></div>
-             <div class="table-container">
-                <table>
+             <div class="table-header">
+                 <h2 class="table-title">Giao dịch</h2>
+                 <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchTrans" onkeyup="filterTable('searchTrans', 'tableTrans')" placeholder="Tìm Hộ, Loại phí...">
+                </div>
+             </div>
+             <div class="table-container" style="max-height: 600px; overflow-y: auto;">
+                <table id="tableTrans">
                     <thead><tr><th>Hộ</th><th>Phí</th><th>Tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
                     <tbody>
                         {% for gd in all_giaodich %}
@@ -306,6 +344,40 @@
     </div>
 
     <script>
+        // HÀM TÌM KIẾM CỰC NHANH CHO TABLE
+        function filterTable(inputId, tableId) {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById(inputId);
+            filter = input.value.toUpperCase();
+            table = document.getElementById(tableId);
+            tr = table.getElementsByTagName("tr");
+
+            // Duyệt qua tất cả các dòng, ẩn dòng không khớp
+            for (i = 0; i < tr.length; i++) {
+                // Bỏ qua dòng tiêu đề (thead)
+                if (tr[i].getElementsByTagName("th").length > 0) continue;
+
+                var match = false;
+                // Kiểm tra tất cả các cột trong dòng
+                var tds = tr[i].getElementsByTagName("td");
+                for (var j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        txtValue = tds[j].textContent || tds[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            match = true;
+                            break; 
+                        }
+                    }
+                }
+                
+                if (match) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+
         // Tab Handling
         document.querySelectorAll('.menu-item[data-page]').forEach(item => {
             item.addEventListener('click', function(e) {

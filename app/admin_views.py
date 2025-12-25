@@ -52,12 +52,18 @@ class MyAdminIndexView(AdminIndexView):
             hokhau_q = db.session.query(HoKhau)
             if search_query:
                 hokhau_q = hokhau_q.filter(HoKhau.ma_so_ho_khau.ilike(f'%{search_query}%'))
+            # [FIX] Xóa limit, lấy tất cả Hộ khẩu để tìm kiếm được hết
             all_hokhau = hokhau_q.order_by(HoKhau.id.desc()).all()
 
-            all_giaodich = db.session.query(GiaoDich).order_by(GiaoDich.id.desc()).limit(20).all()
+            # [FIX QUAN TRỌNG] Xóa .limit(20) ở dòng này để hiện đủ 300 giao dịch
+            all_giaodich = db.session.query(GiaoDich).order_by(GiaoDich.id.desc()).all()
+            
+            # Tạm trú lấy hết (giữ nguyên hoặc xóa limit nếu có)
             all_tamtru = db.session.query(TamTru).order_by(TamTru.ngay_bat_dau.desc()).all()
-            all_logs = db.session.query(LichSuHoKhau).order_by(LichSuHoKhau.ngay_thuc_hien.desc()).limit(50).all()
-            all_requests = db.session.query(YeuCau).order_by(YeuCau.ngay_gui.desc()).limit(50).all()
+            
+            # Log và Yêu cầu có thể giữ limit 50 cho đỡ nặng, hoặc tăng lên 100 tùy bạn
+            all_logs = db.session.query(LichSuHoKhau).order_by(LichSuHoKhau.ngay_thuc_hien.desc()).limit(100).all()
+            all_requests = db.session.query(YeuCau).order_by(YeuCau.ngay_gui.desc()).all()
 
         except Exception as e:
             flash(f"Lỗi tải Dashboard: {e}", "danger")
