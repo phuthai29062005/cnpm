@@ -8,6 +8,14 @@ from datetime import date
 def nhan_khau_choices(): 
     return NhanKhau.query.filter(NhanKhau.tinh_trang == 'Bình thường').all()
 
+def nhan_khau_in_hokhau_choices(hokhau_id=None):
+    """Trả về danh sách nhân khẩu trong một hộ khẩu cụ thể"""
+    if hokhau_id:
+        from .models import NhanKhauHoKhau
+        member_ids = [link.nhan_khau_id for link in NhanKhauHoKhau.query.filter_by(ho_khau_id=hokhau_id).all()]
+        return NhanKhau.query.filter(NhanKhau.id.in_(member_ids), NhanKhau.tinh_trang == 'Bình thường').all()
+    return nhan_khau_choices()
+
 def ho_khau_choices(): 
     return HoKhau.query.all()
 

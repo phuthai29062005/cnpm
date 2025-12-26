@@ -40,8 +40,10 @@
         
         body { 
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh; 
-            padding: 30px; 
+            min-height: 100vh;
+            max-height: 100vh;
+            padding: 30px;
+            overflow-y: auto;
         }
         
         .container { 
@@ -50,7 +52,10 @@
             background: var(--white); 
             border-radius: 16px; 
             box-shadow: var(--shadow-xl);
-            overflow: hidden; 
+            max-height: calc(100vh - 60px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             transition: var(--transition);
         }
         
@@ -101,7 +106,9 @@
         }
         
         .content { 
-            padding: 35px; 
+            padding: 35px;
+            overflow-y: auto;
+            flex: 1;
         }
         
         .info-grid { 
@@ -184,14 +191,20 @@
             font-weight: bold;
         }
         
+        .table-wrapper {
+            max-height: 280px;
+            overflow-y: auto;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-card);
+        }
+        
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin-top: 10px; 
             background: var(--white);
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--shadow-card);
         }
         
         th, td { 
@@ -477,9 +490,14 @@
                     </div>
                 </div>
             </div>
-            <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại Dashboard
-            </a>
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+                </a>
+                <button onclick="window.close()" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
         </div>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -572,6 +590,7 @@
                 </span>
             </h3>
             
+            <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
@@ -623,6 +642,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
             
             <!-- Action Buttons -->
             <div class="action-buttons">
@@ -634,6 +654,9 @@
                 </a>
                 <a href="{{ url_for('crud.split_household') }}?hokhau_id={{ hokhau.id }}" class="btn" style="background: var(--warning); color: white;">
                     <i class="fas fa-cut"></i> Tách hộ khẩu
+                </a>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Đóng
                 </a>
             </div>
         </div>

@@ -115,11 +115,12 @@ def khaitu():
             nk = form.nhan_khau.data
             hk_id = nk.id_ho_khau
             
-            # 1. Kiểm tra nếu người mất là Chủ hộ
+            # 1. Kiểm tra và xử lý nếu người mất là Chủ hộ
             hk_lam_chu = HoKhau.query.filter_by(chu_ho_id=nk.id).first()
             if hk_lam_chu:
-                # Gỡ vai trò chủ hộ trong bảng Ho_khau
+                # Gỡ vai trò chủ hộ trong bảng Ho_khau TRƯỚC KHI xóa các liên kết
                 hk_lam_chu.chu_ho_id = None
+                db.session.flush()  # Đảm bảo cập nhật được áp dụng ngay
                 db.session.add(LichSuHoKhau(
                     ho_khau_id=hk_lam_chu.id, 
                     noi_dung=f"CẢNH BÁO: Chủ hộ {nk.ho_ten} đã qua đời. Hộ khẩu cần bầu chủ hộ mới."
@@ -127,14 +128,20 @@ def khaitu():
                 flash(f'Lưu ý: Hộ {hk_lam_chu.ma_so_ho_khau} hiện đang trống chủ hộ!', 'warning')
 
             # 2. Xử lý các bảng liên quan
+            # Tìm tài khoản của người này
+            tai_khoan = TaiKhoan.query.filter_by(nhan_khau_id=nk.id).first()
+            if tai_khoan:
+                # Xóa tất cả thông báo liên quan đến tài khoản này TRƯỚC
+                ThongBao.query.filter_by(nguoi_nhan_id=tai_khoan.id).delete()
+                # Sau đó mới xóa tài khoản
+                db.session.delete(tai_khoan)
+            
             # Xóa link trong bảng trung gian nhan_khau_ho_khau
             NhanKhauHoKhau.query.filter_by(nhan_khau_id=nk.id).delete()
-            # Xóa tài khoản đăng nhập của người này
-            TaiKhoan.query.filter_by(nhan_khau_id=nk.id).delete()
 
             # 3. Cập nhật trạng thái Nhân khẩu
             nk.tinh_trang = 'Qua đời'
-            nk.id_ho_khau = None # Rời khỏi hộ khẩu hiện tại
+            nk.id_ho_khau = None  # Rời khỏi hộ khẩu hiện tại
             nk.ghi_chu = f"Mất ngày {form.ngay_mat.data}. Lý do: {form.ly_do.data}"
 
             db.session.commit()
@@ -173,6 +180,11 @@ def add_hokhau():
 def edit_hokhau(id):
     hk = HoKhau.query.get_or_404(id)
     form = HoKhauForm(obj=hk)
+    
+    # [FIX] Chỉ hiển thị thành viên trong hộ này cho dropdown chủ hộ
+    from .forms import nhan_khau_in_hokhau_choices
+    form.chu_ho.query_factory = lambda: nhan_khau_in_hokhau_choices(id)
+    
     if form.validate_on_submit():
         try:
             form.populate_obj(hk)

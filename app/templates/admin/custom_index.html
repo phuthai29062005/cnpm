@@ -213,14 +213,51 @@
                     <thead><tr><th>Mã HK</th><th>Chủ hộ</th><th>Địa chỉ</th><th>Số TV</th><th>Thao tác</th></tr></thead>
                     <tbody>
                         {% for hk in all_hokhau %}
-                        <tr class="clickable-row" onclick="openModal('modal-hk-{{ hk.id }}')">
+                        <tr class="household-row" data-id="{{ hk.id }}">
                             <td style="color:var(--primary); font-weight:bold;">{{ hk.ma_so_ho_khau }}</td>
                             <td>{{ hk.chu_ho.ho_ten if hk.chu_ho else '---' }}</td>
                             <td>{{ hk.so_nha }}, {{ hk.duong_pho }}</td>
                             <td><span style="background:#e3f2fd; color:#1565c0; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:0.85rem;">{{ hk.member_links|length }} TV</span></td>
-                            <td onclick="event.stopPropagation()">
-                                <a href="{{ url_for('crud.edit_hokhau', id=hk.id) }}" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-edit"></i></a>
-                                <a href="{{ url_for('crud.delete_hokhau', id=hk.id) }}" class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="return confirm('Xóa?')"><i class="fas fa-trash"></i></a>
+                            <td>
+                                <button onclick="toggleHouseholdDetail({{ hk.id }}); event.stopPropagation();" class="btn btn-success" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-eye"></i> Chi tiết</button>
+                                <a href="{{ url_for('crud.edit_hokhau', id=hk.id) }}" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;" onclick="event.stopPropagation();"><i class="fas fa-edit"></i></a>
+                                <a href="{{ url_for('crud.delete_hokhau', id=hk.id) }}" class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="event.stopPropagation(); return confirm('Xóa?')"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        <tr id="detail-hk-{{ hk.id }}" class="household-detail" style="display:none;">
+                            <td colspan="5" style="background:#f8f9fa; padding:25px;">
+                                <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                    <h2 style="color:var(--secondary); border-bottom:3px solid var(--primary); padding-bottom:10px; margin-bottom:20px; display:inline-block;">
+                                        Hộ khẩu: {{ hk.ma_so_ho_khau }}
+                                    </h2>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:25px; background:#e3f2fd; padding:15px; border-radius:8px;">
+                                        <div><strong>Chủ hộ:</strong> <span style="color:var(--danger); font-weight:bold;">{{ hk.chu_ho.ho_ten if hk.chu_ho else 'Chưa có' }}</span></div>
+                                        <div><strong>Địa chỉ:</strong> {{ hk.so_nha }}, {{ hk.duong_pho }}</div>
+                                        <div><strong>Điện:</strong> {{ hk.so_dien }} kWh</div>
+                                        <div><strong>Nước:</strong> {{ hk.so_nuoc }} m³</div>
+                                    </div>
+                                    <h3 style="margin-bottom:15px; color:#555;"><i class="fas fa-users"></i> Danh sách thành viên ({{ hk.member_links|length }} người)</h3>
+                                    <div style="max-height:300px; overflow-y:auto; border:1px solid #ddd; border-radius:8px;">
+                                        <table style="width:100%; border:none;">
+                                            <thead style="background:#2c3e50; color:white; position:sticky; top:0;"><tr><th>Họ tên</th><th>Quan hệ</th><th>Ngày sinh</th><th>CCCD</th><th>Nghề nghiệp</th></tr></thead>
+                                            <tbody>
+                                                {% for link in hk.member_links %}
+                                                <tr style="border-bottom:1px solid #eee;">
+                                                    <td style="padding:12px;"><strong>{{ link.nhan_khau.ho_ten }}</strong></td>
+                                                    <td style="padding:12px;">{{ link.quan_he_chu_ho }}</td>
+                                                    <td style="padding:12px;">{{ link.nhan_khau.ngay_sinh.strftime('%d/%m/%Y') }}</td>
+                                                    <td style="padding:12px;">{{ link.nhan_khau.so_cccd or '-' }}</td>
+                                                    <td style="padding:12px;">{{ link.nhan_khau.nghe_nghiep or '-' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div style="margin-top:20px; text-align:right; display:flex; gap:10px; justify-content:flex-end;">
+                                        <a href="{{ url_for('crud.add_member_to_hokhau') }}?hokhau_id={{ hk.id }}" class="btn btn-success"><i class="fas fa-user-plus"></i> Thêm thành viên</a>
+                                        <button class="btn btn-secondary" onclick="toggleHouseholdDetail({{ hk.id }})"><i class="fas fa-times"></i> Đóng</button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -228,42 +265,6 @@
                 </table>
             </div>
         </div>
-
-        {% for hk in all_hokhau %}
-        <div id="modal-hk-{{ hk.id }}" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('modal-hk-{{ hk.id }}')">&times;</span>
-                <h2 style="color:var(--secondary); border-bottom:3px solid var(--primary); padding-bottom:10px; margin-bottom:20px; display:inline-block;">
-                    Hộ khẩu: {{ hk.ma_so_ho_khau }}
-                </h2>
-                <div style="background:#f8f9fa; padding:20px; border-radius:10px; margin-bottom:25px; display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                    <div><strong>Chủ hộ:</strong> <span style="color:var(--danger); font-weight:bold;">{{ hk.chu_ho.ho_ten if hk.chu_ho else 'Chưa có' }}</span></div>
-                    <div><strong>Địa chỉ:</strong> {{ hk.so_nha }}, {{ hk.duong_pho }}</div>
-                    <div><strong>Điện:</strong> {{ hk.so_dien }} kWh</div>
-                    <div><strong>Nước:</strong> {{ hk.so_nuoc }} m³</div>
-                </div>
-                <h3 style="margin-bottom:15px; color:#555;">Danh sách thành viên</h3>
-                <table style="border:1px solid #eee;">
-                    <thead style="background:#eee;"><tr><th>Họ tên</th><th>Quan hệ</th><th>Ngày sinh</th><th>CCCD</th><th>Nghề nghiệp</th></tr></thead>
-                    <tbody>
-                        {% for link in hk.member_links %}
-                        <tr>
-                            <td><strong>{{ link.nhan_khau.ho_ten }}</strong></td>
-                            <td>{{ link.quan_he_chu_ho }}</td>
-                            <td>{{ link.nhan_khau.ngay_sinh.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ link.nhan_khau.so_cccd or '-' }}</td>
-                            <td>{{ link.nhan_khau.nghe_nghiep }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div style="margin-top:25px; text-align:right;">
-                    <a href="{{ url_for('crud.add_member_to_hokhau', hokhau_id=hk.id) }}" class="btn btn-success">Thêm thành viên</a>
-                    <button class="btn btn-secondary" onclick="closeModal('modal-hk-{{ hk.id }}')">Đóng</button>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
 
         <div id="temporary" class="page-content">
             <div class="table-header">
@@ -396,10 +397,36 @@
             if(menu) menu.click();
         }
 
-        // Modal Logic
+        // Modal Logic (giữ cho các modal khác nếu có)
         function openModal(id) { document.getElementById(id).style.display = "block"; }
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
         window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
+        
+        // Toggle Household Detail - Expand/Collapse trong bảng
+        function toggleHouseholdDetail(id) {
+            const detailRow = document.getElementById(`detail-hk-${id}`);
+            const allRows = document.querySelectorAll('.household-row');
+            const allDetails = document.querySelectorAll('.household-detail');
+            
+            // Nếu đang mở detail này, thì đóng nó và hiện tất cả rows lại
+            if (detailRow.style.display === 'table-row') {
+                detailRow.style.display = 'none';
+                allRows.forEach(row => row.style.display = 'table-row');
+            } else {
+                // Đóng tất cả details khác
+                allDetails.forEach(detail => detail.style.display = 'none');
+                
+                // Ẩn tất cả các hộ khác
+                allRows.forEach(row => {
+                    if (row.getAttribute('data-id') != id) {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Hiện detail của hộ được chọn
+                detailRow.style.display = 'table-row';
+            }
+        }
     </script>
 </body>
 </html>
