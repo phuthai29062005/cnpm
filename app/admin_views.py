@@ -16,6 +16,9 @@ class MyAdminIndexView(AdminIndexView):
     def index(self):
         try:
             search_query = request.args.get('q', '')
+            # Bộ lọc mới cho giao dịch
+            filter_loaiphi = request.args.get('loaiphi', '')
+            filter_trangthai = request.args.get('trangthai', '')
             
             # Data Cards - [FIX] Loại trừ người đã qua đời khỏi thống kê
             total_nhankhau = db.session.query(NhanKhau).filter(NhanKhau.tinh_trang != 'Qua đời').count()
@@ -52,8 +55,13 @@ class MyAdminIndexView(AdminIndexView):
             # [FIX] Tab Hộ khẩu LUÔN hiển thị tất cả, không áp dụng filter tìm kiếm
             all_hokhau = db.session.query(HoKhau).order_by(HoKhau.id.desc()).all()
 
-            # [FIX QUAN TRỌNG] Xóa .limit(20) ở dòng này để hiện đủ 300 giao dịch
-            all_giaodich = db.session.query(GiaoDich).order_by(GiaoDich.id.desc()).all()
+            # [FIX QUAN TRỌNG] Áp dụng bộ lọc cho giao dịch
+            giaodich_query = db.session.query(GiaoDich)
+            if filter_loaiphi:
+                giaodich_query = giaodich_query.filter(GiaoDich.loai_phi_id == int(filter_loaiphi))
+            if filter_trangthai:
+                giaodich_query = giaodich_query.filter(GiaoDich.trang_thai == filter_trangthai)
+            all_giaodich = giaodich_query.order_by(GiaoDich.id.desc()).all()
             
             # Tạm trú lấy hết (giữ nguyên hoặc xóa limit nếu có)
             all_tamtru = db.session.query(TamTru).order_by(TamTru.ngay_bat_dau.desc()).all()
@@ -61,6 +69,10 @@ class MyAdminIndexView(AdminIndexView):
             # Log và Yêu cầu có thể giữ limit 50 cho đỡ nặng, hoặc tăng lên 100 tùy bạn
             all_logs = db.session.query(LichSuHoKhau).order_by(LichSuHoKhau.ngay_thuc_hien.desc()).limit(100).all()
             all_requests = db.session.query(YeuCau).order_by(YeuCau.ngay_gui.desc()).all()
+            
+            # Lấy danh sách loại phí để hiển thị trong dropdown
+            from .models import LoaiPhi
+            all_loaiphi = db.session.query(LoaiPhi).all()
 
         except Exception as e:
             flash(f"Lỗi tải Dashboard: {e}", "danger")
@@ -86,5 +98,8 @@ class MyAdminIndexView(AdminIndexView):
                            all_giaodich=all_giaodich,
                            all_logs=all_logs,
                            all_requests=all_requests,
-                           search_query=search_query
+                           search_query=search_query,
+                           all_loaiphi=all_loaiphi,
+                           filter_loaiphi=filter_loaiphi,
+                           filter_trangthai=filter_trangthai
                            )

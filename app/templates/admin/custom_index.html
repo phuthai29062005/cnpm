@@ -296,9 +296,27 @@
         <div id="transactions" class="page-content">
              <div class="table-header">
                  <h2 class="table-title">Giao dịch</h2>
-                 <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchTrans" onkeyup="filterTable('searchTrans', 'tableTrans')" placeholder="Tìm Hộ, Loại phí...">
+                 <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <!-- Bộ lọc loại phí -->
+                    <select id="filterLoaiPhi" onchange="applyFilters()" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; min-width: 200px;">
+                        <option value="">Tất cả loại phí</option>
+                        {% for lp in all_loaiphi %}
+                        <option value="{{ lp.id }}" {{ 'selected' if filter_loaiphi == lp.id|string else '' }}>{{ lp.ten_phi }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Bộ lọc trạng thái -->
+                    <select id="filterTrangThai" onchange="applyFilters()" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; min-width: 180px;">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Đang chờ" {{ 'selected' if filter_trangthai == 'Đang chờ' else '' }}>Đang chờ</option>
+                        <option value="Đã thanh toán" {{ 'selected' if filter_trangthai == 'Đã thanh toán' else '' }}>Đã thanh toán</option>
+                    </select>
+                    <!-- Nút reset -->
+                    <button onclick="resetFilters()" class="btn btn-warning" style="padding: 10px 20px;"><i class="fas fa-redo"></i> Đặt lại</button>
+                    <!-- Tìm kiếm -->
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchTrans" onkeyup="filterTable('searchTrans', 'tableTrans')" placeholder="Tìm Hộ, Loại phí...">
+                    </div>
                 </div>
              </div>
              <div class="table-container" style="max-height: 600px; overflow-y: auto;">
@@ -391,7 +409,13 @@
 
         // URL Param Handling
         const urlParams = new URLSearchParams(window.location.search);
-        const tab = urlParams.get('tab');
+        let tab = urlParams.get('tab');
+        
+        // Nếu có filter giao dịch mà không có tab, tự động mở tab transactions
+        if (!tab && (urlParams.get('loaiphi') || urlParams.get('trangthai'))) {
+            tab = 'transactions';
+        }
+        
         if(tab) {
             const menu = document.querySelector(`.menu-item[data-page="${tab}"]`);
             if(menu) menu.click();
@@ -401,6 +425,26 @@
         function openModal(id) { document.getElementById(id).style.display = "block"; }
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
         window.onclick = function(e) { if (e.target.classList.contains('modal')) e.target.style.display = "none"; }
+        
+        // Hàm áp dụng bộ lọc giao dịch
+        function applyFilters() {
+            const loaiPhi = document.getElementById('filterLoaiPhi').value;
+            const trangThai = document.getElementById('filterTrangThai').value;
+            
+            // Tạo URL với các tham số lọc và giữ tab transactions
+            const params = new URLSearchParams();
+            params.set('tab', 'transactions');  // Giữ ở tab Giao dịch
+            if (loaiPhi) params.set('loaiphi', loaiPhi);
+            if (trangThai) params.set('trangthai', trangThai);
+            
+            // Reload trang với các tham số mới
+            window.location.href = '{{ url_for("admin.index") }}?' + params.toString();
+        }
+        
+        // Hàm reset bộ lọc
+        function resetFilters() {
+            window.location.href = '{{ url_for("admin.index") }}?tab=transactions';
+        }
         
         // Toggle Household Detail - Expand/Collapse trong bảng
         function toggleHouseholdDetail(id) {
