@@ -11,7 +11,7 @@ from .models import (
     TaiKhoan, ThongBao, LoaiPhi, ChiSoDienNuoc, LichSuHoKhau, BienLai, YeuCau
 )
 from werkzeug.security import generate_password_hash
-from datetime import datetime
+from datetime import datetime, date
 import uuid
 import pandas as pd
 import os
@@ -222,6 +222,14 @@ def add_member_to_hokhau():
         try:
             nk = form.nhan_khau.data
             hk = form.ho_khau.data
+            
+            # [FIX] Kiểm tra tuổi và CCCD
+            today = date.today()
+            age = today.year - nk.ngay_sinh.year - ((today.month, today.day) < (nk.ngay_sinh.month, nk.ngay_sinh.day))
+            if age >= 16 and not nk.so_cccd:
+                flash(f'Lỗi: {nk.ho_ten} đã {age} tuổi, bắt buộc phải có CCCD!', 'danger')
+                return redirect(request.url)
+            
             if nk.id_ho_khau:
                 if nk.id_ho_khau == hk.id:
                     flash(f'{nk.ho_ten} đã ở trong hộ này rồi!', 'warning')
